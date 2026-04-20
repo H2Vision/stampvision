@@ -3,11 +3,12 @@ name: Revisar Alertas de Producción
 on:
   schedule:
     # México (CST = UTC-6). GitHub Actions usa UTC siempre.
-    # Turno 1 arranca 6:00am CST  = 12:00 UTC
-    # Turno 2 arranca 2:00pm CST  = 20:00 UTC
-    # Turno 3 arranca 10:00pm CST = 04:00 UTC del día siguiente
-    - cron: "0 12,20 * * 1-6"   # 6am y 2pm hora México — Lunes a Sábado
-    - cron: "0 4 * * 2-7"       # 10pm hora México (madrugada UTC) — Lunes a Sábado
+    # Turno 1 arranca 6:00am CST  = 12:00 UTC  (Lun-Sab)
+    # Turno 2 arranca 2:00pm CST  = 20:00 UTC  (Lun-Sab)
+    # Turno 3 arranca 10:00pm CST = 04:00 UTC  (Mar-Dom)
+    - cron: "0 12 * * 1-6"
+    - cron: "0 20 * * 1-6"
+    - cron: "0 4 * * 0-6"
 
   workflow_dispatch:               # También se puede lanzar manualmente desde GitHub
 
