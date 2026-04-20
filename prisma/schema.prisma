@@ -1,7 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// StampVision — Prisma Schema (Prisma 7)
+// URLs de conexión en prisma.config.ts (no en este archivo)
 
 generator client {
   provider = "prisma-client"
@@ -10,5 +8,138 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum EstadoPrensa {
+  activa
+  mantenimiento
+  inactiva
+}
+
+enum TipoAlerta {
+  oee_bajo
+  scrap_alto
+  paro_largo
+  meta_no_alcanzada
+}
+
+enum SeveridadAlerta {
+  info
+  warning
+  critical
+}
+
+enum RolUsuario {
+  operador
+  supervisor
+  gerencia
+  admin
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+/// Catálogo de prensas de estampado en la planta
+model Prensa {
+  id                 String       @id @default(uuid())
+  nombre             String       @unique @db.VarChar(50)
+  tonelaje           Int
+  estado             EstadoPrensa @default(activa)
+  velocidad_estandar Decimal      @db.Decimal(8, 2)
+  meta_oee           Decimal      @db.Decimal(5, 4)
+  created_at         DateTime     @default(now())
+
+  produccion Produccion[]
+  alertas    Alerta[]
+  usuarios   Usuario[]
+
+  @@map("prensas")
+}
+
+/// Registro de producción por turno y prensa (tabla principal)
+model Produccion {
+  id                  String   @id @default(uuid())
+  prensa_id           String
+  fecha               DateTime @db.Date
+  turno               Int
+  piezas_ok           Int
+  piezas_nok          Int
+  tiempo_planeado_min Int
+  tiempo_muerto_min   Int
+  velocidad_real      Decimal  @db.Decimal(8, 2)
+  causa_paro          String?
+  numero_parte        String   @db.VarChar(50)
+  operador            String   @db.VarChar(100)
+  subido_por          String?
+  archivo_origen      String?  @db.VarChar(255)
+  created_at          DateTime @default(now())
+
+  prensa Prensa @relation(fields: [prensa_id], references: [id], onDelete: Restrict)
+
+  @@index([prensa_id])
+  @@index([fecha])
+  @@index([fecha, prensa_id])
+  @@map("produccion")
+}
+
+/// Alertas automáticas generadas por el sistema
+model Alerta {
+  id           String          @id @default(uuid())
+  tipo         TipoAlerta
+  severidad    SeveridadAlerta
+  mensaje      String
+  prensa_id    String
+  valor_actual Decimal         @db.Decimal(10, 4)
+  umbral       Decimal         @db.Decimal(10, 4)
+  leida        Boolean         @default(false)
+  created_at   DateTime        @default(now())
+
+  prensa Prensa @relation(fields: [prensa_id], references: [id], onDelete: Cascade)
+
+  @@index([prensa_id])
+  @@index([leida, created_at])
+  @@map("alertas")
+}
+
+/// Usuarios del sistema (sincronizados con Supabase Auth)
+model Usuario {
+  id              String     @id
+  nombre          String     @db.VarChar(100)
+  email           String     @unique @db.VarChar(255)
+  rol             RolUsuario @default(operador)
+  prensa_asignada String?
+  activo          Boolean    @default(true)
+  created_at      DateTime   @default(now())
+
+  prensa     Prensa?    @relation(fields: [prensa_asignada], references: [id], onDelete: SetNull)
+  audit_logs AuditLog[]
+
+  @@map("usuarios")
+}
+
+/// Log de auditoría de acciones de usuarios
+model AuditLog {
+  id         String   @id @default(uuid())
+  usuario_id String
+  accion     String   @db.VarChar(50)
+  detalle    Json?
+  ip_address String?  @db.VarChar(45)
+  created_at DateTime @default(now())
+
+  usuario Usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@index([usuario_id])
+  @@index([created_at])
+  @@map("audit_log")
+}
+
+/// Parámetros globales de configuración del sistema
+model Configuracion {
+  id          String  @id @default(uuid())
+  clave       String  @unique @db.VarChar(50)
+  valor       String
+  descripcion String?
+
+  @@map("configuracion")
 }

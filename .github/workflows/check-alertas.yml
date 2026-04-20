@@ -1,0 +1,37 @@
+name: Revisar Alertas de Producción
+
+on:
+  schedule:
+    # México (CST = UTC-6). GitHub Actions usa UTC siempre.
+    # Turno 1 arranca 6:00am CST  = 12:00 UTC
+    # Turno 2 arranca 2:00pm CST  = 20:00 UTC
+    # Turno 3 arranca 10:00pm CST = 04:00 UTC del día siguiente
+    - cron: "0 12,20 * * 1-6"   # 6am y 2pm hora México — Lunes a Sábado
+    - cron: "0 4 * * 2-7"       # 10pm hora México (madrugada UTC) — Lunes a Sábado
+
+  workflow_dispatch:               # También se puede lanzar manualmente desde GitHub
+
+jobs:
+  check:
+    name: Verificar umbrales OEE y Scrap
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Llamar a /api/alertas/check
+        run: |
+          RESPONSE=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X POST "${{ secrets.APP_URL }}/api/alertas/check" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+
+          echo "HTTP Status: $RESPONSE"
+          echo "Response body:"
+          cat /tmp/response.json
+
+          if [ "$RESPONSE" != "200" ]; then
+            echo "❌ Error: el endpoint respondió con HTTP $RESPONSE"
+            exit 1
+          fi
+
+          echo "✅ Revisión completada"

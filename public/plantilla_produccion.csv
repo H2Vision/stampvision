@@ -1,0 +1,5 @@
+fecha,prensa_nombre,turno,piezas_ok,piezas_nok,tiempo_planeado_min,tiempo_muerto_min,causa_paro,numero_parte,operador
+2026-04-13,Prensa 1,1,1250,38,480,45,Falla hidráulica,PN-8847-A,Juan García
+2026-04-13,Prensa 1,2,1380,12,480,10,,PN-8847-A,Carlos Méndez
+2026-04-13,Prensa 2,1,980,55,480,90,Cambio de dado,PN-2231-B,Ana Ramos
+2026-04-13,Prensa 3,1,1100,20,480,30,Ajuste de matriz,PN-3345-C,Pedro López
