@@ -41,7 +41,8 @@ export function ReporteSemanalChart({ prensaNombres, rows }: Props) {
           width={38}
         />
         <Tooltip
-          formatter={(v: number, name: string) => [`${v}%`, name]}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          formatter={(v: any, name: any) => [`${v}%`, name]}
           contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e5e7eb" }}
         />
         <Legend
