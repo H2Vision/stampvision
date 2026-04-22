@@ -34,8 +34,8 @@ export function KPICard({ title, value, delta, unit, icon: Icon, isInverse = fal
       {/* Header row */}
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-gray-500">{title}</span>
-        <div className="w-9 h-9 rounded-lg bg-brand-yellow-10 flex items-center justify-center">
-          <Icon className="w-5 h-5 text-brand-yellow" strokeWidth={2} />
+        <div className="w-9 h-9 rounded-lg bg-brand-10 flex items-center justify-center">
+          <Icon className="w-5 h-5 text-brand" strokeWidth={2} />
         </div>
       </div>
 

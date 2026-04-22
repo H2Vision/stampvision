@@ -23,7 +23,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       {payload[1] && (
         <div className="flex justify-between gap-4">
           <span className="text-gray-500">Meta</span>
-          <span className="font-medium text-brand-yellow-d">{payload[1]?.value}%</span>
+          <span className="font-medium text-brand-dark">{payload[1]?.value}%</span>
         </div>
       )}
     </div>

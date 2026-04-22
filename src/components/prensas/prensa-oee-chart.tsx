@@ -22,8 +22,8 @@ export function PrensaOEEChart({ data }: { data: PrensaOEEHistory[] }) {
       <AreaChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="oeeGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor="#C8FF00" stopOpacity={0.3} />
-            <stop offset="95%" stopColor="#C8FF00" stopOpacity={0}   />
+            <stop offset="5%"  stopColor="#D4A017" stopOpacity={0.3} />
+            <stop offset="95%" stopColor="#D4A017" stopOpacity={0}   />
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -56,11 +56,11 @@ export function PrensaOEEChart({ data }: { data: PrensaOEEHistory[] }) {
         <Area
           type="monotone"
           dataKey="oee"
-          stroke="#C8FF00"
+          stroke="#D4A017"
           strokeWidth={2}
           fill="url(#oeeGrad)"
           dot={false}
-          activeDot={{ r: 4, fill: "#C8FF00" }}
+          activeDot={{ r: 4, fill: "#D4A017" }}
         />
       </AreaChart>
     </ResponsiveContainer>

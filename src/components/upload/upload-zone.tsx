@@ -190,8 +190,8 @@ export function UploadZone() {
           min-h-[320px] rounded-xl border-2 border-dashed cursor-pointer
           transition-colors duration-150
           ${isDragging
-            ? "border-brand-yellow bg-brand-yellow-10"
-            : "border-surface-border bg-white hover:border-brand-yellow hover:bg-brand-yellow-5"
+            ? "border-brand bg-brand-10"
+            : "border-surface-border bg-white hover:border-brand hover:bg-brand-5"
           }
         `}
       >
@@ -202,8 +202,8 @@ export function UploadZone() {
           className="hidden"
           onChange={onFileChange}
         />
-        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-colors ${isDragging ? "bg-brand-yellow/20" : "bg-brand-yellow-10 group-hover:bg-brand-yellow/20"}`}>
-          <UploadCloud className="w-8 h-8 text-brand-yellow" />
+        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-colors ${isDragging ? "bg-brand/20" : "bg-brand-10 group-hover:bg-brand/20"}`}>
+          <UploadCloud className="w-8 h-8 text-brand" />
         </div>
         <div className="text-center">
           <p className="text-sm font-semibold text-gray-700">
@@ -321,7 +321,7 @@ export function UploadZone() {
           <button
             onClick={handleUpload}
             disabled={validRows === 0 || isPending}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-brand-yellow text-brand-black font-semibold text-sm hover:bg-brand-yellow-h transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-brand text-brand-black font-semibold text-sm hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isPending
               ? <><Loader2 className="w-4 h-4 animate-spin" /> Insertando…</>
@@ -364,7 +364,7 @@ export function UploadZone() {
         )}
         <button
           onClick={reset}
-          className="px-6 py-2 rounded-lg bg-brand-yellow text-brand-black font-semibold text-sm hover:bg-brand-yellow-h transition-colors"
+          className="px-6 py-2 rounded-lg bg-brand text-brand-black font-semibold text-sm hover:bg-brand-hover transition-colors"
         >
           Subir otro archivo
         </button>

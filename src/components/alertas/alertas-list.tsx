@@ -242,7 +242,7 @@ export function AlertasList() {
                 onClick={() => setTab(t.key)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                   tab === t.key
-                    ? "bg-brand-yellow text-brand-black shadow-sm"
+                    ? "bg-brand text-brand-black shadow-sm"
                     : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
                 }`}
               >
@@ -274,7 +274,7 @@ export function AlertasList() {
           <button
             onClick={handleCheck}
             disabled={checking}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-brand-yellow hover:bg-brand-yellow-h text-brand-black text-sm font-semibold transition-colors disabled:opacity-60"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-brand hover:bg-brand-hover text-brand-black text-sm font-semibold transition-colors disabled:opacity-60"
           >
             {checking
               ? <Loader2 className="w-4 h-4 animate-spin" />

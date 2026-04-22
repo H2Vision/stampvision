@@ -81,7 +81,7 @@ export function MarkdownRenderer({ content, streaming }: MarkdownRendererProps) 
         <ul key={i} className="space-y-1 my-2 pl-1">
           {listItems.map((item, j) => (
             <li key={j} className="flex items-start gap-2 text-sm text-gray-700">
-              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-yellow-d flex-shrink-0" />
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-dark flex-shrink-0" />
               <span>{inlineFormat(item)}</span>
             </li>
           ))}
@@ -103,7 +103,7 @@ export function MarkdownRenderer({ content, streaming }: MarkdownRendererProps) 
         <ol key={i} className="space-y-1 my-2 pl-1">
           {listItems.map((item, j) => (
             <li key={j} className="flex items-start gap-2.5 text-sm text-gray-700">
-              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand-yellow-10 text-brand-yellow-d text-[10px] font-bold flex items-center justify-center mt-0.5">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand-10 text-brand-dark text-[10px] font-bold flex items-center justify-center mt-0.5">
                 {j + 1}
               </span>
               <span>{inlineFormat(item)}</span>
@@ -142,7 +142,7 @@ export function MarkdownRenderer({ content, streaming }: MarkdownRendererProps) 
     <div className="space-y-0.5">
       {elements}
       {streaming && (
-        <span className="inline-block w-0.5 h-4 bg-brand-yellow-d animate-pulse ml-0.5 align-middle" />
+        <span className="inline-block w-0.5 h-4 bg-brand-dark animate-pulse ml-0.5 align-middle" />
       )}
     </div>
   );

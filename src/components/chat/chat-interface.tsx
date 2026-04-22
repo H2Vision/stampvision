@@ -37,7 +37,7 @@ function MessageBubble({ msg }: { msg: Message }) {
   if (isUser) {
     return (
       <div className="flex items-end gap-2.5 justify-end">
-        <div className="max-w-[75%] bg-brand-yellow text-brand-black rounded-2xl rounded-br-sm px-4 py-2.5">
+        <div className="max-w-[75%] bg-brand text-brand-black rounded-2xl rounded-br-sm px-4 py-2.5">
           <p className="text-sm font-medium leading-relaxed">{msg.content}</p>
         </div>
         <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 mb-0.5">
@@ -50,7 +50,7 @@ function MessageBubble({ msg }: { msg: Message }) {
   return (
     <div className="flex items-start gap-2.5">
       <div className="w-8 h-8 rounded-full bg-brand-black flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-        <Bot className="w-4 h-4 text-brand-yellow" />
+        <Bot className="w-4 h-4 text-brand" />
       </div>
       <div className="max-w-[85%] flex flex-col gap-1">
         {/* Data cards */}
@@ -223,7 +223,7 @@ export function ChatInterface() {
         <div className="flex-1 flex flex-col items-center justify-center gap-8 px-6 py-12">
           <div className="flex flex-col items-center gap-4 text-center">
             <div className="w-16 h-16 rounded-2xl bg-brand-black flex items-center justify-center shadow-lg">
-              <Bot className="w-8 h-8 text-brand-yellow" />
+              <Bot className="w-8 h-8 text-brand" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">Asistente de Producción</h2>
@@ -243,9 +243,9 @@ export function ChatInterface() {
                 <button
                   key={s.label}
                   onClick={() => sendMessage(s.prompt)}
-                  className="flex items-center gap-2.5 px-4 py-3 bg-white rounded-xl border border-surface-border text-left hover:border-brand-yellow hover:bg-brand-yellow-5 transition-colors group"
+                  className="flex items-center gap-2.5 px-4 py-3 bg-white rounded-xl border border-surface-border text-left hover:border-brand hover:bg-brand-5 transition-colors group"
                 >
-                  <Zap className="w-3.5 h-3.5 text-brand-yellow flex-shrink-0 group-hover:scale-110 transition-transform" />
+                  <Zap className="w-3.5 h-3.5 text-brand flex-shrink-0 group-hover:scale-110 transition-transform" />
                   <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
                     {s.label}
                   </span>
@@ -329,14 +329,14 @@ function ChatInput({ input, setInput, onSubmit, onKeyDown, isStreaming, textarea
           rows={1}
           placeholder="Pregunta sobre producción, OEE, paros… (Enter para enviar)"
           disabled={isStreaming}
-          className="w-full resize-none rounded-xl border border-surface-border bg-surface-input px-4 py-3 pr-12 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-yellow/40 focus:border-brand-yellow disabled:opacity-60 transition-colors"
+          className="w-full resize-none rounded-xl border border-surface-border bg-surface-input px-4 py-3 pr-12 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand disabled:opacity-60 transition-colors"
           style={{ maxHeight: 160 }}
         />
       </div>
       <button
         type="submit"
         disabled={!input.trim() || isStreaming}
-        className="flex-shrink-0 w-10 h-10 rounded-xl bg-brand-yellow hover:bg-brand-yellow-h disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors shadow-sm"
+        className="flex-shrink-0 w-10 h-10 rounded-xl bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors shadow-sm"
         aria-label="Enviar"
       >
         {isStreaming

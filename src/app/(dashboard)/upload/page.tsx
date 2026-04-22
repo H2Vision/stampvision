@@ -53,7 +53,7 @@ export default function UploadPage() {
                 ["operador",            "Texto",   "Juan García",  "Nombre del operador"],
               ].map(([col, tipo, ejemplo, nota]) => (
                 <tr key={col} className="hover:bg-gray-50">
-                  <td className="py-2 pr-4 font-mono text-brand-yellow-d font-semibold">{col}</td>
+                  <td className="py-2 pr-4 font-mono text-brand-dark font-semibold">{col}</td>
                   <td className="py-2 pr-4 text-gray-500">{tipo}</td>
                   <td className="py-2 pr-4 font-mono text-gray-700">{ejemplo}</td>
                   <td className="py-2 text-gray-400">{nota}</td>

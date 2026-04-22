@@ -43,7 +43,7 @@ function LogoMark({ collapsed }: { collapsed: boolean }) {
       {/* H2 badge */}
       <div className={cn(
         "relative flex-shrink-0 flex items-center justify-center rounded-lg",
-        "bg-brand-yellow shadow-[0_2px_12px_rgba(200,255,0,0.30)]",
+        "bg-brand shadow-[0_2px_12px_rgba(212,160,23,0.30)]",
         collapsed ? "w-9 h-9" : "w-10 h-10"
       )}>
         <span className="text-brand-black font-black leading-none tracking-tight"
@@ -55,7 +55,7 @@ function LogoMark({ collapsed }: { collapsed: boolean }) {
       {!collapsed && (
         <div className="overflow-hidden">
           <p className="text-[14px] font-bold text-white leading-none tracking-wide">
-            H2 <span className="text-brand-yellow">Stamping</span>
+            H2 <span className="text-brand">Stamping</span>
           </p>
           <p className="text-[10px] text-sidebar-text leading-none mt-0.5 tracking-widest uppercase">
             Industrial MES
@@ -92,16 +92,16 @@ function NavItem({
       className={cn(
         "group relative flex items-center gap-3 px-3 py-2.5 mx-2 rounded-lg",
         "text-sm font-medium transition-all duration-150",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow/50",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50",
         isActive
-          ? "bg-brand-yellow-10 text-brand-yellow"
+          ? "bg-brand-10 text-brand"
           : "text-sidebar-text hover:bg-sidebar-hover hover:text-sidebar-text-h",
         collapsed && "justify-center mx-2 px-0 w-10 h-10 rounded-xl"
       )}
     >
       {/* Active left bar */}
       {isActive && !collapsed && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-brand-yellow rounded-r-full" />
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-brand rounded-r-full" />
       )}
 
       <Icon
@@ -109,7 +109,7 @@ function NavItem({
           "flex-shrink-0 transition-colors duration-150",
           collapsed ? "w-5 h-5" : "w-[18px] h-[18px]",
           isActive
-            ? "text-brand-yellow"
+            ? "text-brand"
             : "text-sidebar-text group-hover:text-sidebar-text-h"
         )}
         strokeWidth={isActive ? 2.2 : 1.8}
@@ -162,7 +162,7 @@ function SidebarInner({
     <div className="flex flex-col h-full bg-sidebar">
 
       {/* Top accent line */}
-      <div className="h-[3px] w-full bg-gradient-to-r from-brand-yellow via-brand-yellow-h to-brand-yellow-d flex-shrink-0" />
+      <div className="h-[3px] w-full bg-gradient-to-r from-brand via-brand-hover to-brand-dark flex-shrink-0" />
 
       {/* Logo */}
       <div className="flex items-center justify-between pr-2">
