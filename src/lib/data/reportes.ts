@@ -44,26 +44,43 @@ function calcScrap(ok: number, nok: number) {
 }
 
 export function getPeriodDates(periodo: string): { inicio: string; fin: string } {
+  // Mexico City = UTC-6 (CST). Adjust server UTC time to get the correct local date.
   const now = new Date();
-  const today = toDateString(now);
+  const mxNow = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+  const today = toDateString(mxNow);
 
   if (periodo === "hoy") {
     return { inicio: today, fin: today };
   }
+
   if (periodo === "semana") {
-    const start = new Date(now);
-    start.setUTCDate(start.getUTCDate() - 6);
-    return { inicio: toDateString(start), fin: today };
+    // Week = Monday to Sunday
+    const dow = mxNow.getUTCDay(); // 0=Sun,1=Mon,...,6=Sat
+    const daysFromMonday = dow === 0 ? 6 : dow - 1;
+    const monday = new Date(mxNow);
+    monday.setUTCDate(mxNow.getUTCDate() - daysFromMonday);
+    const sunday = new Date(monday);
+    sunday.setUTCDate(monday.getUTCDate() + 6);
+    // Cap end at today so we don't show future dates
+    const fin = toDateString(sunday) > today ? today : toDateString(sunday);
+    return { inicio: toDateString(monday), fin };
   }
+
   if (periodo === "mes") {
-    const start = new Date(now);
-    start.setUTCDate(start.getUTCDate() - 29);
-    return { inicio: toDateString(start), fin: today };
+    // First day of current month to today
+    const firstDay = new Date(Date.UTC(mxNow.getUTCFullYear(), mxNow.getUTCMonth(), 1));
+    return { inicio: toDateString(firstDay), fin: today };
   }
+
   // default: semana
-  const start = new Date(now);
-  start.setUTCDate(start.getUTCDate() - 6);
-  return { inicio: toDateString(start), fin: today };
+  const dow = mxNow.getUTCDay();
+  const daysFromMonday = dow === 0 ? 6 : dow - 1;
+  const monday = new Date(mxNow);
+  monday.setUTCDate(mxNow.getUTCDate() - daysFromMonday);
+  const sunday = new Date(monday);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  const fin = toDateString(sunday) > today ? today : toDateString(sunday);
+  return { inicio: toDateString(monday), fin };
 }
 
 // ─── Matrix report (aggregated by prensa for a date range + turno) ───────────
