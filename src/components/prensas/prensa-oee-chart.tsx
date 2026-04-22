@@ -43,7 +43,8 @@ export function PrensaOEEChart({ data }: { data: PrensaOEEHistory[] }) {
           width={38}
         />
         <Tooltip
-          formatter={(v: number) => [`${v}%`, "OEE"]}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          formatter={(v: any) => [`${v}%`, "OEE"]}
           contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e5e7eb" }}
         />
         <ReferenceLine
