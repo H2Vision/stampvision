@@ -14,8 +14,9 @@ export default async function ReportesPage({ searchParams }: PageProps) {
   const turno   = searchParams.turno   ?? "all";
 
   const dates  = getPeriodDates(periodo);
-  const inicio = searchParams.inicio ?? dates.inicio;
-  const fin    = searchParams.fin    ?? dates.fin;
+  // Only use custom URL dates when explicitly in "personalizado" mode
+  const inicio = periodo === "personalizado" ? (searchParams.inicio ?? dates.inicio) : dates.inicio;
+  const fin    = periodo === "personalizado" ? (searchParams.fin    ?? dates.fin)    : dates.fin;
 
   const [prensas, { prensaNombres, rows: semanalRows }] = await Promise.all([
     getReporteMatrix(inicio, fin, turno),

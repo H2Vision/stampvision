@@ -31,7 +31,13 @@ export function ReporteFilters({ periodo, turno, inicio, fin }: Props) {
   const [customFin,    setCustomFin]    = useState(fin);
 
   function navigate(params: Record<string, string>) {
-    const sp = new URLSearchParams({ periodo, turno, inicio, fin, ...params });
+    const merged = { periodo, turno, ...params };
+    // Only carry inicio/fin in the URL when using custom range
+    if (merged.periodo === "personalizado") {
+      (merged as Record<string, string>).inicio = params.inicio ?? inicio;
+      (merged as Record<string, string>).fin    = params.fin    ?? fin;
+    }
+    const sp = new URLSearchParams(merged);
     router.push(`/reportes?${sp.toString()}`);
   }
 
