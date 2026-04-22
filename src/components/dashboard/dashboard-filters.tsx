@@ -55,7 +55,11 @@ export function DashboardFilters({
       {/* Prensa */}
       <Select value={selectedPrensa ?? "all"} onValueChange={(v) => push("prensa", v ?? "all")}>
         <SelectTrigger className="h-9 w-44 bg-white border-surface-border text-sm font-medium text-gray-700">
-          <SelectValue placeholder="Todas las prensas" />
+          <span>
+            {selectedPrensa && selectedPrensa !== "all"
+              ? prensas.find((p) => p.id === selectedPrensa)?.nombre ?? "Todas las prensas"
+              : "Todas las prensas"}
+          </span>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todas las prensas</SelectItem>
@@ -70,7 +74,11 @@ export function DashboardFilters({
       {/* Turno */}
       <Select value={selectedTurno ?? "all"} onValueChange={(v) => push("turno", v ?? "all")}>
         <SelectTrigger className="h-9 w-36 bg-white border-surface-border text-sm font-medium text-gray-700">
-          <SelectValue placeholder="Todos los turnos" />
+          <span>
+            {selectedTurno && selectedTurno !== "all"
+              ? `Turno ${selectedTurno}`
+              : "Todos los turnos"}
+          </span>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todos los turnos</SelectItem>
