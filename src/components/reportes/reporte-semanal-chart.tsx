@@ -6,7 +6,7 @@ import {
 } from "recharts";
 import type { ReporteSemanalRow } from "@/lib/data/reportes";
 
-const COLORS = ["#D4A017", "#3B82F6", "#10B981"];
+const COLORS = ["#F5C400", "#3B82F6", "#10B981"];
 
 interface Props {
   prensaNombres: string[];

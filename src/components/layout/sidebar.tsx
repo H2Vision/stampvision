@@ -43,7 +43,7 @@ function LogoMark({ collapsed }: { collapsed: boolean }) {
       {/* H2 badge */}
       <div className={cn(
         "relative flex-shrink-0 flex items-center justify-center rounded-lg",
-        "bg-brand shadow-[0_2px_12px_rgba(212,160,23,0.30)]",
+        "bg-brand shadow-[0_2px_12px_rgba(245,196,0,0.30)]",
         collapsed ? "w-9 h-9" : "w-10 h-10"
       )}>
         <span className="text-brand-black font-black leading-none tracking-tight"

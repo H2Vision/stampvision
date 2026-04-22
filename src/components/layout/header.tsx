@@ -114,7 +114,7 @@ export function Header({
 
       {/* Mobile logo (shown when sidebar hidden) */}
       <div className="lg:hidden flex items-center gap-2">
-        <div className="w-7 h-7 rounded-md bg-brand flex items-center justify-center shadow-[0_1px_6px_rgba(212,160,23,0.30)]">
+        <div className="w-7 h-7 rounded-md bg-brand flex items-center justify-center shadow-[0_1px_6px_rgba(245,196,0,0.30)]">
           <span className="text-brand-black text-[11px] font-black leading-none">H2</span>
         </div>
         <span className="text-sm font-bold text-gray-900">H2 Stamping</span>

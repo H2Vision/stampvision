@@ -14,14 +14,14 @@ const config: Config = {
         foreground: "var(--foreground)",
         // ── Brand ─────────────────────────────────────────────
         brand: {
-          DEFAULT:    "#D4A017",                  // H2 Stamping mustard yellow
-          hover:      "#E6B420",                  // hover
-          dark:       "#B8860D",                  // pressed / text on light bg
-          "5":        "rgba(212,160,23,0.05)",
-          "10":       "rgba(212,160,23,0.10)",
-          "15":       "rgba(212,160,23,0.15)",
-          "20":       "rgba(212,160,23,0.20)",
-          "30":       "rgba(212,160,23,0.30)",
+          DEFAULT:    "#F5C400",                  // H2 Stamping golden yellow
+          hover:      "#FFD333",                  // hover
+          dark:       "#C9A000",                  // pressed / text on light bg
+          "5":        "rgba(245,196,0,0.05)",
+          "10":       "rgba(245,196,0,0.10)",
+          "15":       "rgba(245,196,0,0.15)",
+          "20":       "rgba(245,196,0,0.20)",
+          "30":       "rgba(245,196,0,0.30)",
           black:      "#0A0C0E",
         },
         // ── Sidebar ───────────────────────────────────────────

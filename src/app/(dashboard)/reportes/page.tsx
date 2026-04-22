@@ -2,39 +2,29 @@ import { getReporteMatrix, getReporteSemanal, getPeriodDates } from "@/lib/data/
 import { ReporteMatrixTable } from "@/components/reportes/reporte-matrix-table";
 import { ReporteSemanalChart } from "@/components/reportes/reporte-semanal-chart";
 import { ExportButton } from "@/components/reportes/export-button";
+import { ReporteFilters } from "@/components/reportes/reporte-filters";
 import { BarChart2, TableIcon } from "lucide-react";
-import Link from "next/link";
-
-const PERIODOS = [
-  { key: "hoy",    label: "Hoy"          },
-  { key: "semana", label: "Esta semana"  },
-  { key: "mes",    label: "Este mes"     },
-];
-
-const TURNOS = [
-  { key: "all", label: "Todos los turnos" },
-  { key: "1",   label: "Turno 1"          },
-  { key: "2",   label: "Turno 2"          },
-  { key: "3",   label: "Turno 3"          },
-];
 
 interface PageProps {
-  searchParams: { periodo?: string; turno?: string };
+  searchParams: { periodo?: string; turno?: string; inicio?: string; fin?: string };
 }
 
 export default async function ReportesPage({ searchParams }: PageProps) {
   const periodo = searchParams.periodo ?? "semana";
   const turno   = searchParams.turno   ?? "all";
 
-  const { inicio, fin } = getPeriodDates(periodo);
+  const dates  = getPeriodDates(periodo);
+  const inicio = searchParams.inicio ?? dates.inicio;
+  const fin    = searchParams.fin    ?? dates.fin;
 
   const [prensas, { prensaNombres, rows: semanalRows }] = await Promise.all([
     getReporteMatrix(inicio, fin, turno),
     getReporteSemanal(4),
   ]);
 
-  const turnoLabel   = TURNOS.find((t) => t.key === turno)?.label   ?? "Todos los turnos";
-  const periodoLabel = PERIODOS.find((p) => p.key === periodo)?.label ?? "Esta semana";
+  const periodoLabel = periodo === "personalizado"
+    ? "Período personalizado"
+    : ({ hoy: "Hoy", semana: "Esta semana", mes: "Este mes" } as Record<string, string>)[periodo] ?? "Esta semana";
 
   return (
     <div className="space-y-6">
@@ -44,43 +34,14 @@ export default async function ReportesPage({ searchParams }: PageProps) {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Reportes de Producción</h1>
           <p className="text-sm text-gray-500 mt-1">
-            {periodoLabel} · {inicio === fin ? inicio : `${inicio} — ${fin}`} · {turnoLabel}
+            {periodoLabel} · {inicio === fin ? inicio : `${inicio} — ${fin}`}
           </p>
         </div>
         <ExportButton inicio={inicio} fin={fin} turno={turno} />
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        {/* Período */}
-        <div className="flex rounded-lg border border-surface-border overflow-hidden bg-surface-card shadow-card">
-          {PERIODOS.map((p) => (
-            <Link
-              key={p.key}
-              href={`/reportes?periodo=${p.key}&turno=${turno}`}
-              className={`px-4 py-2 text-sm font-medium transition-colors border-r last:border-r-0 border-surface-border
-                ${periodo === p.key
-                  ? "bg-brand text-brand-black"
-                  : "text-gray-600 hover:bg-gray-50"}`}
-            >
-              {p.label}
-            </Link>
-          ))}
-        </div>
-
-        {/* Turno */}
-        <div className="relative">
-          <select
-            defaultValue={turno}
-            className="h-9 rounded-lg border border-surface-border bg-surface-card text-sm font-medium text-gray-700 pl-3 pr-8 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand/30 shadow-card"
-          >
-            {TURNOS.map((t) => (
-              <option key={t.key} value={t.key}>{t.label}</option>
-            ))}
-          </select>
-          <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-xs">▾</span>
-        </div>
-      </div>
+      <ReporteFilters periodo={periodo} turno={turno} inicio={inicio} fin={fin} />
 
       {/* Matrix table */}
       <div className="bg-surface-card rounded-xl border border-surface-border shadow-card overflow-hidden">
