@@ -3,13 +3,20 @@ import { createServiceClient } from "@/lib/supabase/service";
 
 export const runtime = "nodejs";
 
-// ─── Thresholds ───────────────────────────────────────────────────────────────
+// ─── Thresholds (loaded from configuracion table, with defaults) ──────────────
 
-const THRESHOLDS = {
-  oee: { warning: 80, critical: 70 },
-  scrap: { warning: 5, critical: 10 },
-  downtime: { warning: 60 },
-} as const;
+async function loadThresholds(sb: ReturnType<typeof createServiceClient>) {
+  const DEFAULTS = { oee_warning: 80, oee_critical: 70, scrap_warning: 5, scrap_critical: 10, downtime_warning: 60 };
+  const { data } = await sb.from("configuracion").select("clave,valor")
+    .in("clave", Object.keys(DEFAULTS));
+  const map: Record<string, number> = {};
+  for (const row of (data ?? [])) map[row.clave] = Number(row.valor);
+  return {
+    oee:      { warning: map.oee_warning      ?? DEFAULTS.oee_warning,      critical: map.oee_critical      ?? DEFAULTS.oee_critical      },
+    scrap:    { warning: map.scrap_warning    ?? DEFAULTS.scrap_warning,    critical: map.scrap_critical    ?? DEFAULTS.scrap_critical    },
+    downtime: { warning: map.downtime_warning ?? DEFAULTS.downtime_warning },
+  };
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -37,6 +44,7 @@ export async function POST(req: NextRequest) {
   }
 
   const sb = createServiceClient();
+  const THRESHOLDS = await loadThresholds(sb);
 
   // Last 24 hours
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
