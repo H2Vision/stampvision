@@ -48,6 +48,11 @@
     text-wrap: balance;
   }
 
+  /* iPhone safe area for bottom nav */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   /* Thin scrollbar for sidebar */
   .scrollbar-thin {
     scrollbar-width: thin;

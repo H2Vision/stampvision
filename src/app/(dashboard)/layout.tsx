@@ -1,6 +1,7 @@
 import { SidebarProvider } from "@/components/layout/sidebar-context";
 import { Sidebar, MobileSidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 
 export default function DashboardLayout({
   children,
@@ -14,7 +15,7 @@ export default function DashboardLayout({
         {/* Desktop sidebar */}
         <Sidebar />
 
-        {/* Mobile drawer (portal-like, outside flow) */}
+        {/* Mobile drawer */}
         <MobileSidebar />
 
         {/* Main column */}
@@ -22,13 +23,17 @@ export default function DashboardLayout({
           <Header userName="Patricia Díaz" userRole="Supervisora" />
 
           <main className="flex-1 overflow-y-auto overflow-x-hidden">
-            <div className="p-4 lg:p-6 max-w-[1600px] mx-auto">
+            {/* pb-20 on mobile to avoid content hidden behind bottom nav */}
+            <div className="p-4 pb-24 lg:pb-6 lg:p-6 max-w-[1600px] mx-auto">
               {children}
             </div>
           </main>
         </div>
 
       </div>
+
+      {/* Mobile bottom navigation bar */}
+      <MobileBottomNav />
     </SidebarProvider>
   );
 }
