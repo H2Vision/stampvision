@@ -22,6 +22,23 @@ export interface DataCard {
   rows?: { label: string; value: string; color?: string }[];
 }
 
+// ─── Company context (loaded once at module level, cached in Node memory) ─────
+
+let _companyContext: string | null = null;
+
+function getCompanyContext(): string {
+  if (_companyContext) return _companyContext;
+  try {
+    _companyContext = readFileSync(
+      join(process.cwd(), "src/lib/company-context.md"),
+      "utf-8"
+    );
+  } catch {
+    _companyContext = "H2 Stamping — empresa de estampado metálico industrial.";
+  }
+  return _companyContext;
+}
+
 // ─── Temporal context detection ───────────────────────────────────────────────
 
 function toISO(d: Date) {
@@ -34,15 +51,19 @@ function detectDateRange(message: string): {
   label: string;
 } {
   const lower = message.toLowerCase();
-  const now = new Date();
+  // Mexico UTC-6
+  const now = new Date(Date.now() - 6 * 60 * 60 * 1000);
 
-  // Specific date pattern: YYYY-MM-DD
   const isoMatch = message.match(/\b(\d{4}-\d{2}-\d{2})\b/);
   if (isoMatch) {
     return { startDate: isoMatch[1], endDate: isoMatch[1], label: `fecha ${isoMatch[1]}` };
   }
 
-  // Relative dates (Spanish)
+  if (lower.includes("hoy") || lower.includes("today")) {
+    const s = toISO(now);
+    return { startDate: s, endDate: s, label: "hoy" };
+  }
+
   if (lower.includes("ayer") || lower.includes("yesterday")) {
     const d = new Date(now);
     d.setUTCDate(d.getUTCDate() - 1);
@@ -52,17 +73,17 @@ function detectDateRange(message: string): {
 
   if (lower.includes("esta semana") || lower.includes("semana actual")) {
     const d = new Date(now);
-    const day = d.getUTCDay(); // 0=Sun
-    const diff = day === 0 ? -6 : 1 - day;
-    d.setUTCDate(d.getUTCDate() + diff);
+    const dow = d.getUTCDay();
+    const daysFromMonday = dow === 0 ? 6 : dow - 1;
+    d.setUTCDate(d.getUTCDate() - daysFromMonday);
     return { startDate: toISO(d), endDate: toISO(now), label: "esta semana" };
   }
 
   if (lower.includes("semana pasada") || lower.includes("última semana")) {
     const d = new Date(now);
-    const day = d.getUTCDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    d.setUTCDate(d.getUTCDate() + diff - 7);
+    const dow = d.getUTCDay();
+    const daysFromMonday = dow === 0 ? 6 : dow - 1;
+    d.setUTCDate(d.getUTCDate() - daysFromMonday - 7);
     const end = new Date(d);
     end.setUTCDate(end.getUTCDate() + 6);
     return { startDate: toISO(d), endDate: toISO(end), label: "la semana pasada" };
@@ -95,10 +116,10 @@ function detectDateRange(message: string): {
     return { startDate: toISO(d), endDate: toISO(now), label: "los últimos 30 días" };
   }
 
-  // Default → most recent 7 days with data
+  // Default → last 7 days
   const d = new Date(now);
   d.setUTCDate(d.getUTCDate() - 7);
-  return { startDate: toISO(d), endDate: toISO(now), label: "los últimos días" };
+  return { startDate: toISO(d), endDate: toISO(now), label: "los últimos 7 días" };
 }
 
 // ─── Supabase data query ──────────────────────────────────────────────────────
@@ -106,6 +127,8 @@ function detectDateRange(message: string): {
 async function fetchProductionData(startDate: string, endDate: string) {
   const sb = createServiceClient();
 
+  // TODO: piezas_planeadas no existe aún en la tabla produccion.
+  // Cuando se agregue la columna, incluirla en el select y remover el fallback abajo.
   const { data, error } = await sb
     .from("produccion")
     .select(
@@ -116,82 +139,131 @@ async function fetchProductionData(startDate: string, endDate: string) {
     .order("fecha", { ascending: false })
     .limit(300);
 
-  if (error || !data) return { text: "Sin datos disponibles.", cards: [] as DataCard[] };
+  if (error || !data) return { text: "Sin datos disponibles para este período.", cards: [] as DataCard[] };
 
-  // Aggregate by prensa
   const byPrensa = new Map<
     string,
-    { tp: number; tm: number; ok: number; nok: number; causas: string[] }
+    { tp: number; tm: number; ok: number; nok: number; planeadas: number; causas: string[] }
   >();
 
   for (const r of data) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const nombre = (r.prensas as any)?.nombre ?? "Desconocida";
     if (!byPrensa.has(nombre)) {
-      byPrensa.set(nombre, { tp: 0, tm: 0, ok: 0, nok: 0, causas: [] });
+      byPrensa.set(nombre, { tp: 0, tm: 0, ok: 0, nok: 0, planeadas: 0, causas: [] });
     }
     const acc = byPrensa.get(nombre)!;
     acc.tp += r.tiempo_planeado_min;
     acc.tm += r.tiempo_muerto_min;
     acc.ok += r.piezas_ok;
     acc.nok += r.piezas_nok;
+    // Fallback: cuando no hay plan, planeadas = producidas → Rendimiento = 100% (transparente)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    acc.planeadas += (r as any).piezas_planeadas ?? (r.piezas_ok + r.piezas_nok);
     if (r.causa_paro) acc.causas.push(r.causa_paro);
   }
 
-  // Global totals
-  let totalTP = 0, totalTM = 0, totalOK = 0, totalNOK = 0;
+  let totalTP = 0, totalTM = 0, totalOK = 0, totalNOK = 0, totalPlaneadas = 0;
   for (const [, v] of byPrensa) {
-    totalTP += v.tp; totalTM += v.tm;
-    totalOK += v.ok; totalNOK += v.nok;
+    totalTP += v.tp;
+    totalTM += v.tm;
+    totalOK += v.ok;
+    totalNOK += v.nok;
+    totalPlaneadas += v.planeadas;
   }
 
-  function oee(tp: number, tm: number, ok: number, nok: number) {
-    if (tp === 0) return 0;
-    const A = (tp - tm) / tp;
-    const total = ok + nok;
-    const Q = total > 0 ? ok / total : 0;
-    return Math.round(A * Q * 1000) / 10;
-  }
+  // ── Fórmulas OEE oficiales H2 Stamping (Presentación OEE 17.04.2026 - Diego Yañez) ──
 
-  function scrap(ok: number, nok: number) {
-    const t = ok + nok;
-    return t > 0 ? Math.round((nok / t) * 1000) / 10 : 0;
-  }
-
-  function disp(tp: number, tm: number) {
+  /** Disponibilidad = Tiempo Trabajado / Tiempo Planeado */
+  function disponibilidad(tp: number, tm: number): number {
     return tp > 0 ? Math.round(((tp - tm) / tp) * 1000) / 10 : 0;
   }
 
-  const globalOEE = oee(totalTP, totalTM, totalOK, totalNOK);
-  const globalScrap = scrap(totalOK, totalNOK);
-  const globalDisp = disp(totalTP, totalTM);
+  /** Rendimiento = Piezas Producidas / Piezas Planeadas (cap a 100%) */
+  function rendimiento(ok: number, nok: number, planeadas: number): number {
+    if (planeadas <= 0) return 100;
+    const r = Math.min((ok + nok) / planeadas, 1);
+    return Math.round(r * 1000) / 10;
+  }
 
-  // Prensa breakdown
+  /** Calidad = Piezas OK first-pass / Piezas Producidas Totales */
+  function calidad(ok: number, nok: number): number {
+    const total = ok + nok;
+    return total > 0 ? Math.round((ok / total) * 1000) / 10 : 0;
+  }
+
+  /** Scrap Rate = Piezas NOK / Piezas Totales × 100% */
+  function scrap(ok: number, nok: number): number {
+    const total = ok + nok;
+    return total > 0 ? Math.round((nok / total) * 1000) / 10 : 0;
+  }
+
+  /** OEE Oficial H2 Stamping = Disponibilidad × Rendimiento × Calidad (valores en %) */
+  function oee(disp: number, rend: number, qual: number): number {
+    return Math.round((disp / 100) * (rend / 100) * (qual / 100) * 1000) / 10;
+  }
+
+  /**
+   * Clasificación oficial H2 Stamping 2026 (Meta: 75%)
+   * <65% Inaceptable | 66-75% Regular | 76-85% Aceptable | 86-95% Bueno | >95% Excelente
+   */
+  function classifyOEE(value: number): { label: string; color: string } {
+    if (value < 65)  return { label: "Inaceptable", color: "red" };
+    if (value <= 75) return { label: "Regular",     color: "orange" };
+    if (value <= 85) return { label: "Aceptable",   color: "yellow" };
+    if (value <= 95) return { label: "Bueno",       color: "green" };
+    return             { label: "Excelente",         color: "green" };
+  }
+
+  const META_OEE = 75; // Meta oficial H2 Stamping 2026
+
+  const globalDisp = disponibilidad(totalTP, totalTM);
+  const globalRend = rendimiento(totalOK, totalNOK, totalPlaneadas);
+  const globalQual = calidad(totalOK, totalNOK);
+  const globalOEE  = oee(globalDisp, globalRend, globalQual);
+  const globalScrap = scrap(totalOK, totalNOK);
+  const globalClass = classifyOEE(globalOEE);
+
   const prensaStats = Array.from(byPrensa.entries())
-    .map(([nombre, v]) => ({
-      nombre,
-      oee: oee(v.tp, v.tm, v.ok, v.nok),
-      scrap: scrap(v.ok, v.nok),
-      disp: disp(v.tp, v.tm),
-      ok: v.ok,
-      nok: v.nok,
-      causas: [...new Set(v.causas)].slice(0, 3),
-    }))
+    .map(([nombre, v]) => {
+      const d = disponibilidad(v.tp, v.tm);
+      const r = rendimiento(v.ok, v.nok, v.planeadas);
+      const q = calidad(v.ok, v.nok);
+      const o = oee(d, r, q);
+      return {
+        nombre,
+        oee: o,
+        disp: d,
+        rend: r,
+        qual: q,
+        scrap: scrap(v.ok, v.nok),
+        ok: v.ok,
+        nok: v.nok,
+        planeadas: v.planeadas,
+        classification: classifyOEE(o),
+        causas: [...new Set(v.causas)].slice(0, 3),
+      };
+    })
     .sort((a, b) => b.oee - a.oee);
 
-  // Worst scrap
   const worstScrap = [...prensaStats].sort((a, b) => b.scrap - a.scrap)[0];
 
-  // Summary text for Claude
   const summaryLines = [
-    `**Período:** ${startDate} al ${endDate}`,
-    `**OEE Global:** ${globalOEE}% | **Disponibilidad:** ${globalDisp}% | **Scrap Rate:** ${globalScrap}%`,
-    `**Total piezas OK:** ${totalOK.toLocaleString()} | **Total NOK:** ${totalNOK.toLocaleString()}`,
-    "",
-    "**OEE por Prensa:**",
+    `Período consultado: ${startDate} al ${endDate}`,
+    `Meta OEE H2 Stamping 2026: ${META_OEE}%`,
+    ``,
+    `=== KPIs Globales de Planta ===`,
+    `OEE Global: ${globalOEE}% (${globalClass.label})`,
+    `  ├─ Disponibilidad: ${globalDisp}%`,
+    `  ├─ Rendimiento: ${globalRend}%`,
+    `  └─ Calidad (first-pass): ${globalQual}%`,
+    `Scrap Rate: ${globalScrap}%`,
+    `Total piezas OK: ${totalOK.toLocaleString()} | NOK: ${totalNOK.toLocaleString()} | Planeadas: ${totalPlaneadas.toLocaleString()}`,
+    ``,
+    `=== OEE por Centro de Trabajo (Prensas / Ensamble) ===`,
     ...prensaStats.map(
       (p) =>
-        `- ${p.nombre}: OEE ${p.oee}% | Disp ${p.disp}% | Scrap ${p.scrap}% | OK ${p.ok.toLocaleString()} | NOK ${p.nok}`
+        `  ${p.nombre}: OEE ${p.oee}% (${p.classification.label}) | D ${p.disp}% × R ${p.rend}% × Q ${p.qual}% | OK ${p.ok.toLocaleString()} | NOK ${p.nok} | Plan ${p.planeadas.toLocaleString()}`
     ),
   ];
 
@@ -208,48 +280,26 @@ async function fetchProductionData(startDate: string, endDate: string) {
     .slice(0, 5);
 
   if (topCausas.length > 0) {
-    summaryLines.push("", "**Causas de paro más frecuentes:**");
+    summaryLines.push("", "Causas de paro más frecuentes:");
     topCausas.forEach(([causa, count]) => {
-      summaryLines.push(`- ${causa}: ${count} ocurrencia(s)`);
+      summaryLines.push(`  ${causa}: ${count} ocurrencia(s)`);
     });
   }
 
-  // Build data cards
   const cards: DataCard[] = [
-    {
-      type: "kpi",
-      label: "OEE Global",
-      value: `${globalOEE}%`,
-      positive: globalOEE >= 82,
-    },
-    {
-      type: "kpi",
-      label: "Disponibilidad",
-      value: `${globalDisp}%`,
-      positive: globalDisp >= 90,
-    },
-    {
-      type: "kpi",
-      label: "Scrap Rate",
-      value: `${globalScrap}%`,
-      positive: globalScrap < 5,
-    },
-    {
-      type: "kpi",
-      label: "Piezas OK",
-      value: totalOK.toLocaleString(),
-      positive: true,
-    },
+    { type: "kpi", label: "OEE Global",    value: `${globalOEE}%`,          delta: globalClass.label, positive: globalOEE >= META_OEE },
+    { type: "kpi", label: "Disponibilidad", value: `${globalDisp}%`,        positive: globalDisp >= 90 },
+    { type: "kpi", label: "Rendimiento",   value: `${globalRend}%`,         positive: globalRend >= 90 },
+    { type: "kpi", label: "Calidad",        value: `${globalQual}%`,        positive: globalQual >= 95 },
+    { type: "kpi", label: "Scrap Rate",     value: `${globalScrap}%`,       positive: globalScrap < 5 },
+    { type: "kpi", label: "Piezas OK",      value: totalOK.toLocaleString(), positive: true },
     {
       type: "ranking",
-      label: "OEE por Prensa",
+      label: "OEE por Centro de Trabajo",
       rows: prensaStats.map((p) => ({
         label: p.nombre,
-        value: `${p.oee}%`,
-        color:
-          p.oee >= 85 ? "green" :
-          p.oee >= 70 ? "yellow" :
-          p.oee >= 50 ? "orange" : "red",
+        value: `${p.oee}% (${p.classification.label})`,
+        color: p.classification.color,
       })),
     },
   ];
@@ -279,66 +329,117 @@ export async function POST(req: NextRequest) {
     const lastMsg = messages[messages.length - 1].content;
     const { startDate, endDate, label } = detectDateRange(lastMsg);
 
-    // Fetch production data
-    const { text: productionText, cards } = await fetchProductionData(startDate, endDate);
+    const [{ text: productionText, cards }] = await Promise.all([
+      fetchProductionData(startDate, endDate),
+    ]);
 
-    // Read company context
-    let companyContext = "";
-    try {
-      companyContext = readFileSync(
-        join(process.cwd(), "src/lib/company-context.md"),
-        "utf-8"
-      );
-    } catch {
-      companyContext = "H2 Stamping — empresa de estampado metálico industrial.";
-    }
+    const companyContext = getCompanyContext();
 
-    // Build system prompt
-    const systemPrompt = `Eres el asistente de IA del MES (Manufacturing Execution System) de H2 Stamping. Tienes acceso a datos de producción en tiempo real y ayudas al equipo de planta a entender el desempeño de sus prensas.
+    // ── System prompt with prompt caching ──────────────────────────────────────
+    // The company context block uses cache_control so Anthropic caches it across
+    // requests. Only the live production data block changes each call.
+    // Anthropic caches any block marked with cache_control for ~5 minutes (TTL).
+    // This saves ~70-80% of input tokens on repeated queries.
+    const systemBlocks: Anthropic.Messages.TextBlockParam[] = [
+      {
+        type: "text",
+        text: `Eres **H2 Insight**, el consultor de manufactura de IA integrado al MES de **H2 Stamping México** (planta Querétaro). No eres un chatbot genérico: eres un experto senior en estampado de alta precisión, ensamble y manufactura industrial que conoce a fondo esta planta.
+
+## Idioma
+- Detecta automáticamente el idioma del usuario (español o inglés) y responde SIEMPRE en el mismo idioma.
+- Si cambian de idioma a media conversación, tú también cambias.
+- Términos técnicos universales (OEE, scrap, MTBF, downtime, setup) se mantienen igual en ambos idiomas.
+- Nombres de centros de trabajo (S0009, S0014, ZKW) y métricas no se traducen.
+
+## Alcance
+Tienes acceso al histórico completo de producción de la planta México. Los datos que recibes en cada turno son una ventana filtrada según el período consultado o el fallback de últimos 7 días.
+
+## Fórmula OEE Oficial H2 Stamping
+OEE = Disponibilidad × Rendimiento × Calidad
+
+- Disponibilidad = Tiempo Trabajado / Tiempo Planeado
+- Rendimiento = Piezas Producidas / Piezas Planeadas
+- Calidad = Piezas OK (first-pass) / Piezas Producidas Totales — NO cuenta reprocesadas
+
+**Meta OEE 2026: 75%**
+
+Clasificación oficial:
+- <65% Inaceptable
+- 66–75% Regular
+- 76–85% Aceptable
+- 86–95% Bueno
+- >95% Excelente
+
+## Comportamiento
+
+### Período
+- Si el usuario especifica período (hoy, ayer, semana, fechas), usa SOLO esos datos e indícalo al inicio: "Análisis del 2026-05-08:" / "Analyzing yesterday:".
+- Si NO especifica, usa fallback de 7 días y MENCIÓNALO al inicio: "Considerando los últimos 7 días (fallback por defecto)..." y sugiere al final que puede pedir otro rango.
+
+### Análisis predictivo (cuando pidan tendencias, predicciones, riesgos)
+Hacer análisis profundo:
+1. **Patrones**: comportamientos repetidos (ej: "S0014 baja OEE consistentemente en turno nocturno los lunes").
+2. **Anomalías**: datos fuera de rango esperado, con contexto.
+3. **Riesgos**: extrapola con cautela. Usa "al ritmo actual...", "si la tendencia se mantiene...".
+4. NO predigas sin base en los datos visibles. Si falta histórico, dilo y sugiere ampliar rango.
+
+### Recomendaciones
+Da AMBOS niveles según el contexto, claramente separados:
+- **Tácticas (operativas)**: qué revisar hoy, qué prensa priorizar, qué causa atacar — para supervisor/operador.
+- **Estratégicas (planta)**: ajustes de PM, programa de turnos, inversión en herramentales — para gerencia.
+
+Si la pregunta es operativa ("¿qué hago con S0014?"), prioriza tácticas.
+Si es estratégica ("¿cómo mejoro el OEE global?"), incluye ambas.
+
+## Estilo
+- Profesional y directo, como consultor senior. Sin floreos ni "como modelo de IA...".
+- Encabezados, tablas y listas para múltiples métricas. Prosa breve para datos puntuales.
+- Cita SIEMPRE los números exactos. No redondees a la baja.
+- Cuando detectes problema (OEE <65%, scrap >5%, paros recurrentes), no lo suavices: márcalo y propón acción.
+
+## Restricciones (NO revelar)
+- Nombres de clientes finales (Phillips, Aspel, Eckerle, Oechsler, Voltaira, Preh, ZKW, etc.). Si el usuario pregunta por un centro asociado a un cliente, responde por el código de centro de trabajo (S0009, S0014, etc.), nunca por cliente.
+- Precios, márgenes, costos unitarios, datos financieros.
+- Información de proveedores específicos.
+- NO inventes datos. Si no los tienes, di: "No tengo ese dato en el período consultado."
+- NO especules causa raíz sin evidencia. Marca hipótesis como tales.
+
+## Cierre
+Cuando aplique, cierra con "Próximo paso sugerido" / "Suggested next step" con 1–3 acciones concretas.
 
 ## Contexto de la Empresa
-${companyContext}
-
-## Datos de Producción — ${label}
+${companyContext}`,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        cache_control: { type: "ephemeral" } as any,
+      },
+      {
+        type: "text",
+        text: `## Datos de Producción en Tiempo Real — ${label}
 ${productionText}
 
-## Instrucciones de Comportamiento
-- Responde siempre en español, de forma clara y directa.
-- Usa los datos de producción proporcionados para responder con precisión.
-- Cuando menciones métricas, usa los valores exactos de los datos.
-- Si el usuario pregunta sobre algo fuera del período consultado, indícalo.
-- Sugiere acciones concretas cuando detectes problemas (OEE bajo, scrap alto, paros frecuentes).
-- Estructura tu respuesta con encabezados y listas cuando sean muchos datos.
-- NO reveles nombres de clientes finales, precios, márgenes ni información financiera.
-- Mantén el tono profesional pero amigable para operadores y supervisores de planta.
-- Si no tienes datos suficientes, dilo claramente.`;
+*Fecha y hora de consulta (Mexico UTC-6): ${new Date(Date.now() - 6 * 60 * 60 * 1000).toLocaleString("es-MX")}*`,
+      },
+    ];
 
-    // Initialize Anthropic client
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-    // Build messages for API (exclude system, format correctly)
     const apiMessages = messages.map((m) => ({
       role: m.role as "user" | "assistant",
       content: m.content,
     }));
 
-    // Create streaming response
     const encoder = new TextEncoder();
 
     const readable = new ReadableStream({
       async start(controller) {
-        // First event: data cards
         controller.enqueue(
-          encoder.encode(
-            `data: ${JSON.stringify({ type: "cards", cards })}\n\n`
-          )
+          encoder.encode(`data: ${JSON.stringify({ type: "cards", cards })}\n\n`)
         );
 
-        // Stream Claude response
         const stream = anthropic.messages.stream({
           model: "claude-sonnet-4-6",
           max_tokens: 2048,
-          system: systemPrompt,
+          system: systemBlocks,
           messages: apiMessages,
         });
 
@@ -348,9 +449,7 @@ ${productionText}
             event.delta.type === "text_delta"
           ) {
             controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({ type: "text", text: event.delta.text })}\n\n`
-              )
+              encoder.encode(`data: ${JSON.stringify({ type: "text", text: event.delta.text })}\n\n`)
             );
           }
         }
