@@ -127,12 +127,10 @@ function detectDateRange(message: string): {
 async function fetchProductionData(startDate: string, endDate: string) {
   const sb = createServiceClient();
 
-  // TODO: piezas_planeadas no existe aún en la tabla produccion.
-  // Cuando se agregue la columna, incluirla en el select y remover el fallback abajo.
   const { data, error } = await sb
     .from("produccion")
     .select(
-      "fecha, turno, piezas_ok, piezas_nok, tiempo_planeado_min, tiempo_muerto_min, causa_paro, numero_parte, prensas(nombre)"
+      "fecha, turno, piezas_ok, piezas_nok, piezas_planeadas, tiempo_planeado_min, tiempo_muerto_min, causa_paro, numero_parte, prensas(nombre)"
     )
     .gte("fecha", startDate)
     .lte("fecha", endDate)
@@ -157,9 +155,8 @@ async function fetchProductionData(startDate: string, endDate: string) {
     acc.tm += r.tiempo_muerto_min;
     acc.ok += r.piezas_ok;
     acc.nok += r.piezas_nok;
-    // Fallback: cuando no hay plan, planeadas = producidas → Rendimiento = 100% (transparente)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    acc.planeadas += (r as any).piezas_planeadas ?? (r.piezas_ok + r.piezas_nok);
+    acc.planeadas += (r as any).piezas_planeadas ?? 0;
     if (r.causa_paro) acc.causas.push(r.causa_paro);
   }
 
