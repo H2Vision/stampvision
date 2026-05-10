@@ -1,14 +1,16 @@
-import { getAdminPrensas, getUmbrales, getAdminUsuarios } from "@/lib/data/admin";
-import { PrensasConfig } from "@/components/admin/prensas-config";
+import { getAdminPrensas, getUmbrales, getAdminUsuarios, getAdminEmpleados, getAdminPrensasSimple } from "@/lib/data/admin";
+import { PrensasConfig }  from "@/components/admin/prensas-config";
 import { UmbralesConfig } from "@/components/admin/umbrales-config";
-import { UsuariosList } from "@/components/admin/usuarios-list";
-import { Settings, Gauge, Users } from "lucide-react";
+import { UsuariosList }   from "@/components/admin/usuarios-list";
+import { EmpleadosList }  from "@/components/admin/empleados-list";
+import { Settings, Gauge, Users, HardHat } from "lucide-react";
 import Link from "next/link";
 
 const TABS = [
-  { key: "prensas",  label: "Prensas",           icon: Settings },
-  { key: "umbrales", label: "Umbrales de Alertas",icon: Gauge    },
-  { key: "usuarios", label: "Usuarios",           icon: Users    },
+  { key: "prensas",   label: "Prensas",            icon: Settings  },
+  { key: "umbrales",  label: "Umbrales de Alertas", icon: Gauge     },
+  { key: "empleados", label: "Empleados",            icon: HardHat  },
+  { key: "usuarios",  label: "Usuarios",             icon: Users    },
 ];
 
 interface PageProps {
@@ -18,22 +20,26 @@ interface PageProps {
 export default async function AdminPage({ searchParams }: PageProps) {
   const tab = searchParams.tab ?? "prensas";
 
-  const [prensas, umbrales, usuarios] = await Promise.all([
+  const [prensas, umbrales, usuarios, empleados, prensasSimple] = await Promise.all([
     getAdminPrensas(),
     getUmbrales(),
     getAdminUsuarios(),
+    getAdminEmpleados(),
+    getAdminPrensasSimple(),
   ]);
 
   const SECTION: Record<string, React.ReactNode> = {
-    prensas:  <PrensasConfig  prensas={prensas}   />,
-    umbrales: <UmbralesConfig umbrales={umbrales} />,
-    usuarios: <UsuariosList   usuarios={usuarios} />,
+    prensas:   <PrensasConfig  prensas={prensas}   />,
+    umbrales:  <UmbralesConfig umbrales={umbrales} />,
+    empleados: <EmpleadosList  empleados={empleados} prensas={prensasSimple} />,
+    usuarios:  <UsuariosList   usuarios={usuarios} />,
   };
 
   const descriptions: Record<string, string> = {
-    prensas:  "Configura los parámetros de cada prensa: meta OEE, tonelaje y estado operativo.",
-    umbrales: "Define los valores que activan alertas automáticas en cada turno.",
-    usuarios: "Usuarios registrados en el sistema y sus roles asignados.",
+    prensas:   "Configura los parámetros de cada prensa: meta OEE, tonelaje y estado operativo.",
+    umbrales:  "Define los valores que activan alertas automáticas en cada turno.",
+    empleados: "Gestiona el personal de planta: roles, turnos y capacitaciones por NP/centro.",
+    usuarios:  "Usuarios registrados en el sistema y sus roles asignados.",
   };
 
   return (
@@ -46,7 +52,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
       </div>
 
       {/* Tab nav */}
-      <div className="flex gap-1 p-1 bg-surface-input rounded-xl w-fit">
+      <div className="flex flex-wrap gap-1 p-1 bg-surface-input rounded-xl w-fit">
         {TABS.map(({ key, label, icon: Icon }) => (
           <Link
             key={key}

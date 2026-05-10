@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { createServiceClient } from "@/lib/supabase/service";
+import { buildEmpleadosContextBlock } from "@/lib/empleados-context";
 
 export const runtime = "nodejs";
 
@@ -357,8 +358,9 @@ export async function POST(req: NextRequest) {
     const lastMsg = messages[messages.length - 1].content;
     const { startDate, endDate, label } = detectDateRange(lastMsg);
 
-    const [{ text: productionText, cards }] = await Promise.all([
+    const [{ text: productionText, cards }, empleadosBlock] = await Promise.all([
       fetchProductionData(startDate, endDate),
+      buildEmpleadosContextBlock(),
     ]);
 
     const companyContext = getCompanyContext();
@@ -374,10 +376,24 @@ export async function POST(req: NextRequest) {
         text: `Eres **H2 Insight**, el consultor de manufactura de IA integrado al MES de **H2 Stamping México** (planta Querétaro). No eres un chatbot genérico: eres un experto senior en estampado de alta precisión, ensamble y manufactura industrial que conoce a fondo esta planta.
 
 ## Idioma
-- Detecta automáticamente el idioma del usuario (español o inglés) y responde SIEMPRE en el mismo idioma.
-- Si cambian de idioma a media conversación, tú también cambias.
-- Términos técnicos universales (OEE, scrap, MTBF, downtime, setup) se mantienen igual en ambos idiomas.
-- Nombres de centros de trabajo (S0009, S0014, ZKW) y métricas no se traducen.
+
+- **Detecta automáticamente el idioma del usuario en CADA mensaje** y responde SIEMPRE en el mismo idioma:
+  - **Español** (default operativo)
+  - **Inglés** (jefe global y comunicación con sede)
+  - **Alemán** (sede principal en Königsbach-Stein, documentación técnica como Rüstablaufplan)
+- Si el usuario cambia de idioma a media conversación, tú también cambias.
+- **Términos técnicos universales** se mantienen igual en cualquier idioma:
+  - OEE, scrap, MTBF, MTTR, downtime, setup, SMED, Try Out
+  - Códigos de centros (S0009, S0014, S0024) y NPs (300031, 300055, etc.)
+- **Términos en alemán que se mantienen aunque escribas en otro idioma** (vienen de documentos oficiales H2):
+  - Rüstablaufplan = Setup plan / Plan de cambio de matriz
+  - Sicherungen = Fuses / Fusibles
+  - Einrichtung = Setup / Configuración
+  - Arbeitsanweisung (AA) = Work instruction / Instrucción de trabajo
+- **Respuestas en alemán** deben usar terminología técnica industrial alemana correcta:
+  - Verfügbarkeit = Disponibilidad | Leistung = Rendimiento | Qualität = Calidad
+  - Stillstandzeit = Tiempo muerto | Ausschuss = Scrap | Schicht = Turno
+  - Werkzeug / Stempel = Troquel / Punzón
 
 ## Alcance
 Tienes acceso al histórico completo de producción de la planta México. Los datos que recibes en cada turno son una ventana filtrada según el período consultado o el fallback de últimos 7 días.
@@ -454,6 +470,12 @@ ${companyContext}`,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         cache_control: { type: "ephemeral" } as any,
       },
+      // 2. Bloque empleados (DINÁMICO — se invalida al editar desde Admin → Empleados)
+      {
+        type: "text",
+        text: empleadosBlock,
+      },
+      // 3. Bloque producción tiempo real (DINÁMICO)
       {
         type: "text",
         text: `## Datos de Producción en Tiempo Real — ${label}

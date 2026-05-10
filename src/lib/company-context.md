@@ -114,17 +114,20 @@ Familias típicas producidas (sin revelar clientes):
 
 ## 6. Roles y Responsabilidades del Equipo
 
-| Rol                      | Responsabilidades clave                                            |
-|--------------------------|--------------------------------------------------------------------|
-| **Operador**             | Registra producción, reporta paros, mide piezas en línea           |
-| **Supervisor de Turno**  | Monitorea OEE en tiempo real, autoriza paros, asigna prioridades   |
-| **Ingeniero de Proceso** | Analiza causas raíz, mejora tiempos de ciclo, valida velocidades    |
-| **Gerente de Producción**| Analiza tendencias, toma decisiones de programación semanal        |
-| **Jefe de Mantenimiento**| Atiende alertas, programa PM, actualiza histórico de fallas        |
-| **Calidad**              | Analiza scrap, libera material, gestiona no conformidades (NCR)    |
-| **Planeación**           | Genera programa semanal, gestiona cambios de dado, define piezas planeadas |
+| Rol                      | Responsabilidades clave                                                     |
+|--------------------------|-----------------------------------------------------------------------------|
+| **Operador**             | Registra producción, reporta paros, mide piezas en línea                    |
+| **Supervisor de Turno**  | Monitorea OEE en tiempo real, autoriza paros, asigna prioridades            |
+| **Ingeniero de Proceso** | Analiza causas raíz, mejora tiempos de ciclo, valida velocidades             |
+| **Gerente de Producción**| Analiza tendencias, toma decisiones de programación semanal                 |
+| **Jefe de Mantenimiento**| Atiende alertas, programa PM, actualiza histórico de fallas                 |
+| **Calidad**              | Analiza scrap, libera material, gestiona no conformidades (NCR)             |
+| **Planeación**           | Genera programa semanal, gestiona cambios de dado, define piezas planeadas  |
 
-La supervisora registrada en el sistema es **Patricia Díaz**.
+> **Nota:** El listado de personal (nombres, números de empleado, turnos, capacitaciones por NP)
+> se carga dinámicamente desde la base de datos en el bloque "Personal de Planta" que sigue a este
+> contexto. **NO uses datos memorizados de personal — siempre usa el bloque dinámico.**
+> Ese bloque refleja altas, bajas y cambios de nivel en tiempo real.
 
 ---
 
@@ -176,25 +179,29 @@ H2 Stamping aplica metodologías de manufactura esbelta:
 
 ---
 
-## 11. Glosario Técnico
+## 11. Glosario Técnico (ES / EN / DE)
 
-| Término           | Definición                                                                      |
-|-------------------|---------------------------------------------------------------------------------|
-| OEE               | Overall Equipment Effectiveness — eficiencia general del equipo                  |
-| Disponibilidad    | % del tiempo planeado en que el centro está operativo                            |
-| Rendimiento       | % de piezas producidas vs piezas planeadas según programa semanal               |
-| Calidad           | % de piezas conformes a la primera (first-pass yield, sin reproceso)            |
-| Scrap / NOK       | Pieza defectuosa que no cumple especificaciones de calidad                       |
-| Tiempo muerto     | Minutos en que el centro está parado de forma no planeada                       |
-| Troquel / Dado    | Herramienta de corte y formado específica para cada número de parte              |
-| Blank / Lámina    | Material de entrada (hoja metálica cortada) que se alimenta al centro            |
-| Setup / Changeover| Tiempo de cambio de dado entre dos números de parte diferentes                   |
-| Turno             | Jornada de 8 horas; hay 3 turnos por día operativo (540 min totales, 435 útiles)|
-| NP                | Número de parte — identificador único de cada producto                           |
-| PM                | Mantenimiento Preventivo — servicio programado al equipo                         |
-| MC                | Mantenimiento Correctivo — servicio no planeado por falla                        |
-| NCR               | Non-Conformance Report — reporte de no conformidad de calidad                    |
-| IATF 16949        | Estándar de gestión de calidad para la industria automotriz                      |
-| SPM               | Strokes Per Minute — golpes por minuto de la prensa                             |
-| Velocidad estándar| Velocidad nominal del centro según Plan de Producción Semanal (pzs/min)         |
-| Velocidad real    | Velocidad efectiva promedio registrada en producción (pzs/min)                  |
+| Español               | English                  | Deutsch                        | Definición                                                       |
+|-----------------------|--------------------------|--------------------------------|------------------------------------------------------------------|
+| OEE                   | OEE                      | OEE (Gesamtanlageneffektivität)| Eficiencia general del equipo = Disp × Rend × Cal               |
+| Disponibilidad        | Availability             | Verfügbarkeit                  | % tiempo planeado en que el centro está operativo                |
+| Rendimiento           | Performance              | Leistung                       | % piezas producidas vs planeadas                                 |
+| Calidad (first-pass)  | Quality                  | Qualität                       | % piezas conformes a la primera, sin reproceso                   |
+| Scrap / NOK           | Scrap / Reject           | Ausschuss                      | Pieza defectuosa que no cumple especificaciones                  |
+| Tiempo muerto         | Downtime                 | Stillstandzeit                 | Minutos de paro no planeado                                      |
+| Troquel / Dado        | Die / Tool               | Werkzeug / Stempel             | Herramienta de corte y formado por número de parte               |
+| Blank / Lámina        | Blank / Sheet            | Platine / Blech                | Material de entrada que se alimenta al centro                    |
+| Setup / Changeover    | Setup / Changeover       | Rüstzeit / Rüsten              | Tiempo de cambio de dado entre números de parte                  |
+| Plan de cambio        | Setup plan               | Rüstablaufplan                 | Documento oficial de secuencia de changeover                     |
+| Instrucción de trabajo| Work instruction         | Arbeitsanweisung (AA)          | Documento de proceso estandarizado                               |
+| Configuración         | Setup / Configuration    | Einrichtung                    | Ajuste inicial de parámetros de proceso                          |
+| Fusibles              | Fuses                    | Sicherungen                    | Elemento de protección eléctrica                                 |
+| Turno                 | Shift                    | Schicht                        | Jornada de 8 horas (540 min totales, 435 útiles)                 |
+| NP                    | Part number              | Teilenummer                    | Número de parte — identificador único de producto                |
+| PM                    | Preventive Maintenance   | Vorbeugende Wartung            | Mantenimiento preventivo programado                              |
+| MC                    | Corrective Maintenance   | Korrektive Wartung             | Mantenimiento correctivo por falla                               |
+| NCR                   | Non-Conformance Report   | Abweichungsbericht             | Reporte de no conformidad de calidad                             |
+| IATF 16949            | IATF 16949               | IATF 16949                     | Estándar de calidad para industria automotriz                    |
+| SPM                   | SPM (Strokes per minute) | Hübe pro Minute                | Golpes por minuto de la prensa                                   |
+| Velocidad estándar    | Standard speed           | Standardgeschwindigkeit        | Velocidad nominal del centro según plan semanal (pzs/min)        |
+| Velocidad real        | Actual speed             | Istgeschwindigkeit             | Velocidad efectiva promedio registrada en producción (pzs/min)   |

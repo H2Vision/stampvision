@@ -79,6 +79,46 @@ export async function getUmbrales(): Promise<Umbrales> {
   };
 }
 
+export interface AdminEmpleadoRow {
+  id:              string;
+  numero_empleado: number;
+  nombre:          string;
+  rol:             string;
+  turno_principal: number | null;
+  activo:          boolean;
+  fecha_ingreso:   string | null;
+  notas:           string | null;
+  capacitaciones:  Array<{
+    prensa_id:    string | null;
+    numero_parte: string | null;
+    nivel:        number;
+    notas:        string | null;
+    prensas:      { nombre: string } | null;
+  }>;
+}
+
+export interface AdminPrensaSimple {
+  id:     string;
+  nombre: string;
+}
+
+export async function getAdminEmpleados(): Promise<AdminEmpleadoRow[]> {
+  const sb = createServiceClient();
+  const { data, error } = await sb
+    .from("empleados")
+    .select("id, numero_empleado, nombre, rol, turno_principal, activo, fecha_ingreso, notas, capacitaciones:empleado_capacitaciones(prensa_id, numero_parte, nivel, notas, prensas(nombre))")
+    .order("nombre", { ascending: true });
+  if (error) return [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []) as any;
+}
+
+export async function getAdminPrensasSimple(): Promise<AdminPrensaSimple[]> {
+  const sb = createServiceClient();
+  const { data } = await sb.from("prensas").select("id, nombre").order("nombre");
+  return (data ?? []) as AdminPrensaSimple[];
+}
+
 export async function getAdminUsuarios(): Promise<AdminUsuarioRow[]> {
   const sb = createServiceClient();
   const { data, error } = await sb
