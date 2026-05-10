@@ -130,7 +130,7 @@ async function fetchProductionData(startDate: string, endDate: string) {
   const { data, error } = await sb
     .from("produccion")
     .select(
-      "fecha, turno, piezas_ok, piezas_nok, piezas_planeadas, tiempo_planeado_min, tiempo_muerto_min, causa_paro, numero_parte, prensas(nombre)"
+      "fecha, turno, piezas_ok, piezas_nok, piezas_planeadas, tiempo_planeado_min, tiempo_muerto_min, velocidad_real, causa_paro, numero_parte, operador, prensas(nombre, tonelaje, velocidad_estandar, meta_oee)"
     )
     .gte("fecha", startDate)
     .lte("fecha", endDate)
@@ -141,14 +141,28 @@ async function fetchProductionData(startDate: string, endDate: string) {
 
   const byPrensa = new Map<
     string,
-    { tp: number; tm: number; ok: number; nok: number; planeadas: number; causas: string[] }
+    {
+      tp: number; tm: number; ok: number; nok: number; planeadas: number;
+      velocidadRealSum: number; velocidadRealCount: number;
+      velocidadEstandar: number; metaOee: number; tonelaje: number;
+      operadores: Set<string>; causas: string[];
+    }
   >();
 
   for (const r of data) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const nombre = (r.prensas as any)?.nombre ?? "Desconocida";
+    const prensa = r.prensas as any;
+    const nombre = prensa?.nombre ?? "Desconocida";
     if (!byPrensa.has(nombre)) {
-      byPrensa.set(nombre, { tp: 0, tm: 0, ok: 0, nok: 0, planeadas: 0, causas: [] });
+      byPrensa.set(nombre, {
+        tp: 0, tm: 0, ok: 0, nok: 0, planeadas: 0,
+        velocidadRealSum: 0, velocidadRealCount: 0,
+        velocidadEstandar: prensa?.velocidad_estandar ?? 0,
+        metaOee: prensa?.meta_oee != null ? Math.round(prensa.meta_oee * 100) : 75,
+        tonelaje: prensa?.tonelaje ?? 0,
+        operadores: new Set<string>(),
+        causas: [],
+      });
     }
     const acc = byPrensa.get(nombre)!;
     acc.tp += r.tiempo_planeado_min;
@@ -157,6 +171,11 @@ async function fetchProductionData(startDate: string, endDate: string) {
     acc.nok += r.piezas_nok;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     acc.planeadas += (r as any).piezas_planeadas ?? 0;
+    if (r.velocidad_real != null) {
+      acc.velocidadRealSum += Number(r.velocidad_real);
+      acc.velocidadRealCount += 1;
+    }
+    if (r.operador) acc.operadores.add(r.operador);
     if (r.causa_paro) acc.causas.push(r.causa_paro);
   }
 
@@ -227,6 +246,9 @@ async function fetchProductionData(startDate: string, endDate: string) {
       const r = rendimiento(v.ok, v.nok, v.planeadas);
       const q = calidad(v.ok, v.nok);
       const o = oee(d, r, q);
+      const velocidadRealAvg = v.velocidadRealCount > 0
+        ? Math.round(v.velocidadRealSum / v.velocidadRealCount * 10) / 10
+        : null;
       return {
         nombre,
         oee: o,
@@ -237,7 +259,13 @@ async function fetchProductionData(startDate: string, endDate: string) {
         ok: v.ok,
         nok: v.nok,
         planeadas: v.planeadas,
+        velocidadReal: velocidadRealAvg,
+        velocidadEstandar: v.velocidadEstandar,
+        metaOee: v.metaOee,
+        tonelaje: v.tonelaje,
+        operadores: [...v.operadores],
         classification: classifyOEE(o),
+        vsPropiaMeta: o >= v.metaOee ? "✓ sobre meta" : `✗ bajo meta (meta: ${v.metaOee}%)`,
         causas: [...new Set(v.causas)].slice(0, 3),
       };
     })
@@ -258,10 +286,13 @@ async function fetchProductionData(startDate: string, endDate: string) {
     `Total piezas OK: ${totalOK.toLocaleString()} | NOK: ${totalNOK.toLocaleString()} | Planeadas: ${totalPlaneadas.toLocaleString()}`,
     ``,
     `=== OEE por Centro de Trabajo (Prensas / Ensamble) ===`,
-    ...prensaStats.map(
-      (p) =>
-        `  ${p.nombre}: OEE ${p.oee}% (${p.classification.label}) | D ${p.disp}% × R ${p.rend}% × Q ${p.qual}% | OK ${p.ok.toLocaleString()} | NOK ${p.nok} | Plan ${p.planeadas.toLocaleString()}`
-    ),
+    ...prensaStats.map((p) => {
+      const velInfo = p.velocidadReal != null
+        ? ` | Vel real: ${p.velocidadReal} pzs/min vs estándar: ${p.velocidadEstandar} pzs/min`
+        : "";
+      const ops = p.operadores.length > 0 ? ` | Operadores: ${p.operadores.join(", ")}` : "";
+      return `  ${p.nombre} (${p.tonelaje}t): OEE ${p.oee}% (${p.classification.label}) — ${p.vsPropiaMeta} | D ${p.disp}% × R ${p.rend}% × Q ${p.qual}% | OK ${p.ok.toLocaleString()} | NOK ${p.nok} | Plan ${p.planeadas.toLocaleString()}${velInfo}${ops}`;
+    }),
   ];
 
   const causasTop = data
@@ -400,6 +431,20 @@ Si es estratégica ("¿cómo mejoro el OEE global?"), incluye ambas.
 - Información de proveedores específicos.
 - NO inventes datos. Si no los tienes, di: "No tengo ese dato en el período consultado."
 - NO especules causa raíz sin evidencia. Marca hipótesis como tales.
+
+## Datos disponibles por centro de trabajo
+Para cada centro de trabajo (prensa) tienes acceso a estos datos por período:
+- OEE descompuesto en sus 3 factores (Disp × Rend × Cal)
+- Velocidad real promedio vs velocidad estándar de la prensa
+- Meta OEE individual (puede diferir entre prensas en el futuro)
+- Operadores que trabajaron en cada turno
+- Causas de paro registradas y su frecuencia
+- Tonelaje y características técnicas
+
+Cuando analices una prensa, considera:
+- Si la velocidad real está significativamente bajo la estándar, hay oportunidad de mejora en Rendimiento
+- Si una prensa tiene meta_oee distinta a la global, evalúala contra su propia meta
+- Patrones por operador o turno pueden indicar problemas de capacitación o ergonomía
 
 ## Cierre
 Cuando aplique, cierra con "Próximo paso sugerido" / "Suggested next step" con 1–3 acciones concretas.
