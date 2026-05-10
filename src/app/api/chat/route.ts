@@ -345,6 +345,81 @@ async function fetchProductionData(startDate: string, endDate: string) {
   return { text: summaryLines.join("\n"), cards };
 }
 
+// ─── Intent detection ─────────────────────────────────────────────────────────
+
+/**
+ * Detecta si una pregunta del usuario es sobre métricas/producción/OEE y por
+ * lo tanto justifica enviar las DataCards visuales al frontend.
+ *
+ * Conservador: ante duda prefiere NO enviar (menos ruido visual).
+ * Soporta español, inglés y alemán.
+ *
+ * NOTA: productionText SIEMPRE se calcula y va al system prompt del modelo —
+ * esto solo controla si las tarjetas se renderizan en el frontend.
+ */
+function shouldSendCards(message: string): boolean {
+  const lower = message.toLowerCase();
+
+  // Keywords que SÍ ameritan tarjetas (métricas, performance, KPIs)
+  const metricsKeywords = [
+    // Español
+    "oee", "disponibilidad", "rendimiento", "calidad", "scrap", "merma",
+    "producción", "produccion", "producir", "produjo", "produjeron",
+    "piezas", "tiempo muerto", "downtime", "kpi", "indicador",
+    "métrica", "metrica", "desempeño", "desempeno", "performance",
+    "como va", "cómo va", "cómo está", "como esta", "estado de la planta",
+    "predice", "predicción", "prediccion", "tendencia", "pronóstico",
+    "compara", "comparar", "comparación", "ranking",
+    "mejor", "peor", "más eficiente", "menos eficiente",
+    "meta", "objetivo", "alcanzar",
+    // Inglés
+    "availability", "quality", "production", "produced",
+    "pieces", "parts", "metric", "predict", "trend",
+    "compare", "comparison", "ranking", "best", "worst",
+    "how is", "how's", "target", "goal",
+    // Alemán
+    "leistung", "verfügbarkeit", "qualität", "ausschuss",
+    "produktion", "stillstand", "kennzahl", "vergleich",
+    "wie läuft", "wie geht", "ziel",
+  ];
+
+  // Keywords que NO ameritan tarjetas (personal, clientes, definiciones, etc.)
+  const nonMetricsKeywords = [
+    // Español
+    "quién", "quien", "operador", "empleado", "personal",
+    "capacita", "nivel", "rol", "puesto",
+    "qué es", "que es", "explica", "define", "significa",
+    "cliente", "proveedor", "material", "para quién",
+    "documento", "formato", "procedimiento",
+    // Inglés
+    "who", "operator", "employee", "staff", "personnel",
+    "what is", "explain", "define", "means",
+    "customer", "client", "supplier", "material",
+    "document", "form", "procedure",
+    // Alemán
+    "wer", "bediener", "mitarbeiter", "personal",
+    "was ist", "erkläre", "kunde", "lieferant",
+  ];
+
+  const hasMetrics    = metricsKeywords.some((k)    => lower.includes(k));
+  const hasNonMetrics = nonMetricsKeywords.some((k) => lower.includes(k));
+
+  if (hasNonMetrics && !hasMetrics) return false;
+  if (hasMetrics    && !hasNonMetrics) return true;
+
+  if (hasMetrics && hasNonMetrics) {
+    // Caso ambiguo: si empieza con interrogativa de personal/cliente, no mandar
+    const firstWords = lower.split(/\s+/).slice(0, 3).join(" ");
+    if (/^(quién|quien|who|wer|para qué cliente|for which customer)/i.test(firstWords)) {
+      return false;
+    }
+    return true; // ambiguo pero con métricas → mandar tarjetas
+  }
+
+  // Sin keywords claras → no mandar (conservador)
+  return false;
+}
+
 // ─── API Route ────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
@@ -448,6 +523,35 @@ Si es estratégica ("¿cómo mejoro el OEE global?"), incluye ambas.
 - NO inventes datos. Si no los tienes, di: "No tengo ese dato en el período consultado."
 - NO especules causa raíz sin evidencia. Marca hipótesis como tales.
 
+## Fuentes de datos sobre personal
+
+Tienes DOS fuentes de información sobre personas:
+
+1. **Bloque de Personal de Planta** (siguiente bloque del system prompt) — fuente AUTORITATIVA.
+   Incluye nombre, número de empleado, rol, turno, capacitaciones por NP/centro.
+   Esta lista viene de la BD y se actualiza en tiempo real.
+
+2. **Campo \`operador\` en datos de producción** (bloque de tiempo real) — fuente HISTÓRICA.
+   Indica QUÉ operador trabajó en CADA turno de los datos consultados.
+   Útil para análisis tipo "qué operador tuvo más scrap" o "rendimiento por operador".
+
+**Reglas para responder sobre personal:**
+
+- Si el usuario pregunta **quién opera/trabaja en X** (sin período específico):
+  - Responde con el bloque de Personal de Planta (lista actualizada).
+  - Filtra por turno/centro si aplica según las capacitaciones registradas.
+
+- Si el usuario pregunta **quién operó/trabajó en X durante un período**:
+  - Usa el campo \`operador\` de los datos del período consultado.
+  - Si un operador aparece en los datos pero NO está en el bloque de Personal de Planta,
+    es un dato histórico de un empleado que ya no está activo — menciónalo así.
+
+- **NUNCA inventes nombres**. Si no hay datos en ninguna fuente, dilo:
+  "No tengo información sobre operadores asignados a [X] en mi BD actual."
+
+- **NUNCA mezcles las dos fuentes** sin distinguir cuál es. Cita la fuente cuando respondas
+  (ej. "según el directorio de personal" vs "según los registros de producción del período").
+
 ## Datos disponibles por centro de trabajo
 Para cada centro de trabajo (prensa) tienes acceso a estos datos por período:
 - OEE descompuesto en sus 3 factores (Disp × Rend × Cal)
@@ -496,9 +600,13 @@ ${productionText}
 
     const readable = new ReadableStream({
       async start(controller) {
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ type: "cards", cards })}\n\n`)
-        );
+        // Solo enviar tarjetas si la pregunta es sobre métricas/producción/OEE.
+        // productionText siempre va al model — esto solo controla el render visual.
+        if (shouldSendCards(lastMsg)) {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: "cards", cards })}\n\n`)
+          );
+        }
 
         const stream = anthropic.messages.stream({
           model: "claude-sonnet-4-6",
