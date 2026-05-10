@@ -25,6 +25,7 @@ export interface AdminUsuarioRow {
   email:            string;
   rol:              string;
   activo:           boolean;
+  prensa_id:        string | null;
   prensa_nombre:    string | null;
   created_at:       string;
 }
@@ -123,7 +124,7 @@ export async function getAdminUsuarios(): Promise<AdminUsuarioRow[]> {
   const sb = createServiceClient();
   const { data, error } = await sb
     .from("usuarios")
-    .select("id, nombre, email, rol, activo, created_at, prensas(nombre)")
+    .select("id, nombre, email, rol, activo, prensa_id, created_at, prensas(nombre)")
     .order("created_at", { ascending: false });
   if (error) return []; // table may be empty
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -133,6 +134,7 @@ export async function getAdminUsuarios(): Promise<AdminUsuarioRow[]> {
     email:         u.email,
     rol:           u.rol,
     activo:        u.activo,
+    prensa_id:     u.prensa_id ?? null,
     prensa_nombre: u.prensas?.nombre ?? null,
     created_at:    u.created_at,
   }));

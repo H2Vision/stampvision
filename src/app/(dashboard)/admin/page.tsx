@@ -32,7 +32,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
     prensas:   <PrensasConfig  prensas={prensas}   />,
     umbrales:  <UmbralesConfig umbrales={umbrales} />,
     empleados: <EmpleadosList  empleados={empleados} prensas={prensasSimple} />,
-    usuarios:  <UsuariosList   usuarios={usuarios} />,
+    usuarios:  <UsuariosList   usuarios={usuarios} prensas={prensasSimple} />,
   };
 
   const descriptions: Record<string, string> = {
