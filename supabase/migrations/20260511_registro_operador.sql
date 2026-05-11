@@ -20,7 +20,7 @@ ALTER TABLE produccion
 CREATE TABLE IF NOT EXISTS downtime_eventos (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   -- Referencia al turno de producción (opcional — puede registrarse sin produccion_id)
-  produccion_id  UUID REFERENCES produccion(id) ON DELETE SET NULL,
+  produccion_id  TEXT REFERENCES produccion(id) ON DELETE SET NULL,
   -- Identificación del turno (para cuando no hay produccion_id)
   prensa_id      TEXT REFERENCES prensas(id) ON DELETE CASCADE,
   operador       VARCHAR(150),
