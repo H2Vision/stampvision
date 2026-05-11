@@ -4,13 +4,40 @@ import { useState, useTransition } from "react";
 import type { AdminUsuarioRow, AdminPrensaSimple } from "@/lib/data/admin";
 import { UserPlus, Pencil, ToggleLeft, ToggleRight, X, Check } from "lucide-react";
 
-const ROLES = ["admin", "gerencia", "supervisor", "operador"] as const;
+const ROLES = [
+  "admin",
+  "direccion",
+  "gerencia",
+  "ing_proceso",
+  "calidad",
+  "planeacion",
+  "jefe_mantenimiento",
+  "supervisor",
+  "operador",
+] as const;
+
+const ROL_LABELS: Record<string, string> = {
+  admin:              "Admin",
+  direccion:          "Dirección",
+  gerencia:           "Gerencia",
+  ing_proceso:        "Ing. Proceso",
+  calidad:            "Calidad",
+  planeacion:         "Planeación",
+  jefe_mantenimiento: "Jefe Mantenimiento",
+  supervisor:         "Supervisor",
+  operador:           "Operador",
+};
 
 const ROL_STYLES: Record<string, string> = {
-  admin:      "bg-purple-100 text-purple-700",
-  gerencia:   "bg-blue-100 text-blue-700",
-  supervisor: "bg-brand/15 text-brand-dark",
-  operador:   "bg-gray-100 text-gray-600",
+  admin:              "bg-purple-100 text-purple-700",
+  direccion:          "bg-rose-100 text-rose-700",
+  gerencia:           "bg-blue-100 text-blue-700",
+  ing_proceso:        "bg-cyan-100 text-cyan-700",
+  calidad:            "bg-amber-100 text-amber-700",
+  planeacion:         "bg-indigo-100 text-indigo-700",
+  jefe_mantenimiento: "bg-orange-100 text-orange-700",
+  supervisor:         "bg-brand/15 text-brand-dark",
+  operador:           "bg-gray-100 text-gray-600",
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -103,7 +130,7 @@ function UsuarioModal({
               onChange={(e) => set("rol", e.target.value)}
             >
               {ROLES.map((r) => (
-                <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+                <option key={r} value={r}>{ROL_LABELS[r] ?? r}</option>
               ))}
             </select>
           </div>
@@ -292,8 +319,8 @@ export function UsuariosList({
                   <td className="py-3 px-4 font-medium text-gray-900">{u.nombre}</td>
                   <td className="py-3 px-4 text-gray-500">{u.email}</td>
                   <td className="py-3 px-4">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${ROL_STYLES[u.rol] ?? "bg-gray-100 text-gray-600"}`}>
-                      {u.rol}
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${ROL_STYLES[u.rol] ?? "bg-gray-100 text-gray-600"}`}>
+                      {ROL_LABELS[u.rol] ?? u.rol}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-gray-600">
