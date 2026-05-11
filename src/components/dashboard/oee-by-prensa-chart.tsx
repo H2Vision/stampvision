@@ -11,8 +11,8 @@ interface OEEByPrensaChartProps {
 }
 
 function oeeColor(oee: number): string {
-  if (oee >= 85) return "#22c55e"; // green
-  if (oee >= 70) return "#F5C400"; // brand yellow
+  if (oee >= 85) return "#22c55e"; // bright green — Bueno/Excelente
+  if (oee >= 70) return "#16A34A"; // brand green  — Regular/Aceptable
   if (oee >= 50) return "#f97316"; // orange
   return "#ef4444";                // red
 }
@@ -92,10 +92,10 @@ export function OEEByPrensaChart({ data }: OEEByPrensaChartProps) {
         <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(0,0,0,0.04)" }} />
         <ReferenceLine
           x={avgMeta}
-          stroke="#F5C400"
+          stroke="#16A34A"
           strokeDasharray="4 3"
           strokeWidth={1.5}
-          label={{ value: `Meta ${avgMeta}%`, position: "top", fontSize: 10, fill: "#C9A000" }}
+          label={{ value: `Meta ${avgMeta}%`, position: "top", fontSize: 10, fill: "#166534" }}
         />
         <Bar dataKey="oee" radius={[0, 4, 4, 0]} maxBarSize={28}>
           {data.map((entry) => (

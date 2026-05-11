@@ -52,6 +52,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS empleados_update_timestamp ON empleados;
 CREATE TRIGGER empleados_update_timestamp
 BEFORE UPDATE ON empleados
 FOR EACH ROW EXECUTE FUNCTION update_empleados_timestamp();

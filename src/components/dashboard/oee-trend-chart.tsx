@@ -72,10 +72,10 @@ export function OEETrendChart({ data }: OEETrendChartProps) {
         <Tooltip content={<CustomTooltip />} />
         <ReferenceLine
           y={metaValue}
-          stroke="#F5C400"
+          stroke="#16A34A"
           strokeDasharray="5 3"
           strokeWidth={1.5}
-          label={{ value: `Meta ${metaValue}%`, position: "right", fontSize: 10, fill: "#C9A000" }}
+          label={{ value: `Meta ${metaValue}%`, position: "right", fontSize: 10, fill: "#166534" }}
         />
         <Area
           type="monotone"

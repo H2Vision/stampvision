@@ -45,7 +45,7 @@ function LogoMark({ collapsed }: { collapsed: boolean }) {
       {/* H2 badge */}
       <div className={cn(
         "relative flex-shrink-0 flex items-center justify-center rounded-lg",
-        "bg-brand shadow-[0_2px_12px_rgba(245,196,0,0.30)]",
+        "bg-brand shadow-[0_2px_12px_rgba(22,163,74,0.35)]",
         collapsed ? "w-9 h-9" : "w-10 h-10"
       )}>
         <span className="text-brand-black font-black leading-none tracking-tight"
@@ -57,7 +57,7 @@ function LogoMark({ collapsed }: { collapsed: boolean }) {
       {!collapsed && (
         <div className="overflow-hidden">
           <p className="text-[14px] font-bold text-white leading-none tracking-wide">
-            H2 <span className="text-brand">Stamping</span>
+            H2 <span className="text-green-400">Stamping</span>
           </p>
           <p className="text-[10px] text-sidebar-text leading-none mt-0.5 tracking-widest uppercase">
             Industrial MES
@@ -164,7 +164,7 @@ function SidebarInner({
     <div className="flex flex-col h-full bg-sidebar">
 
       {/* Top accent line */}
-      <div className="h-[3px] w-full bg-gradient-to-r from-brand via-brand-hover to-brand-dark flex-shrink-0" />
+      <div className="h-[3px] w-full bg-gradient-to-r from-brand-dark via-brand to-green-400 flex-shrink-0" />
 
       {/* Logo */}
       <div className="flex items-center justify-between pr-2">

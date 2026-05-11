@@ -109,7 +109,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <div className="flex flex-wrap gap-3 text-xs text-gray-500">
             {[
               { color: "#22c55e", label: "≥ 85%" },
-              { color: "#F5C400", label: "70–84%" },
+              { color: "#16A34A", label: "70–84%" },
               { color: "#f97316", label: "50–69%" },
               { color: "#ef4444", label: "< 50%" },
             ].map((item) => (

@@ -12,40 +12,40 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        // ── Brand ─────────────────────────────────────────────
+        // ── Brand — H2 Stamping Industrial Green ──────────────
         brand: {
-          DEFAULT:    "#F5C400",                  // H2 Stamping golden yellow
-          hover:      "#FFD333",                  // hover
-          dark:       "#C9A000",                  // pressed / text on light bg
-          "5":        "rgba(245,196,0,0.05)",
-          "10":       "rgba(245,196,0,0.10)",
-          "15":       "rgba(245,196,0,0.15)",
-          "20":       "rgba(245,196,0,0.20)",
-          "30":       "rgba(245,196,0,0.30)",
+          DEFAULT:    "#16A34A",   // green-600  — primary action
+          hover:      "#15803D",   // green-700  — hover
+          dark:       "#166534",   // green-800  — pressed / text on light
+          "5":        "rgba(22,163,74,0.05)",
+          "10":       "rgba(22,163,74,0.10)",
+          "15":       "rgba(22,163,74,0.15)",
+          "20":       "rgba(22,163,74,0.20)",
+          "30":       "rgba(22,163,74,0.30)",
           black:      "#0A0C0E",
         },
-        // ── Sidebar ───────────────────────────────────────────
+        // ── Sidebar — deep slate, feels premium ───────────────
         sidebar: {
-          DEFAULT:    "#0D0F14",   // main bg
-          hover:      "#14161D",   // nav item hover
-          active:     "#181A22",   // nav item active bg
-          border:     "#1E2130",   // dividers
-          text:       "#6B7280",   // default nav text
-          "text-h":   "#D1D5DB",   // hover text
+          DEFAULT:    "#0B1120",   // very dark navy-black
+          hover:      "#111827",   // slightly lighter on hover
+          active:     "#162032",   // active item bg
+          border:     "#1E2D40",   // dividers
+          text:       "#64748B",   // default nav text (slate-500)
+          "text-h":   "#CBD5E1",   // hover text (slate-300)
         },
         // ── Surface ───────────────────────────────────────────
         surface: {
-          DEFAULT:  "#F1F3F7",     // page background
+          DEFAULT:  "#F0F4F8",     // page background — cool off-white
           card:     "#FFFFFF",
           border:   "#E2E8F0",
-          input:    "#EDF0F5",
+          input:    "#EEF2F7",
         },
         // ── Steel blue accents (data / info) ──────────────────
         steel: {
-          DEFAULT:  "#3B82F6",
-          light:    "#60A5FA",
-          dark:     "#1D4ED8",
-          "10":     "rgba(59,130,246,0.10)",
+          DEFAULT:  "#0EA5E9",     // sky-500 — data callouts
+          light:    "#38BDF8",
+          dark:     "#0369A1",
+          "10":     "rgba(14,165,233,0.10)",
         },
       },
       fontFamily: {

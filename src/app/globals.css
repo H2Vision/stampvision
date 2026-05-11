@@ -37,8 +37,8 @@
   }
 
   body {
-    background-color: #F1F3F7;
-    color: #111827;
+    background-color: #F0F4F8;
+    color: #0F172A;
   }
 }
 
@@ -56,7 +56,7 @@
   /* Thin scrollbar for sidebar */
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: #1E2130 transparent;
+    scrollbar-color: #1E2D40 transparent;
   }
   .scrollbar-thin::-webkit-scrollbar {
     width: 4px;
@@ -65,7 +65,7 @@
     background: transparent;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: #1E2130;
+    background-color: #1E2D40;
     border-radius: 2px;
   }
 }
