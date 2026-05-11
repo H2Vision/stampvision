@@ -16,6 +16,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "La hora de fin debe ser después de la hora de inicio." }, { status: 400 });
   }
 
+  // Calcular minutos en la API (columna no es generada en BD)
+  const [hi, mi] = hora_inicio.split(":").map(Number);
+  const [hf, mf] = hora_fin.split(":").map(Number);
+  const minutos = (hf * 60 + mf) - (hi * 60 + mi);
+
   const sb = createServiceClient();
   const { data, error } = await sb
     .from("downtime_eventos")
@@ -29,6 +34,7 @@ export async function POST(req: NextRequest) {
       motivo,
       hora_inicio,
       hora_fin,
+      minutos,
       comentarios:   comentarios  || null,
     })
     .select()

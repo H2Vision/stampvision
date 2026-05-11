@@ -32,9 +32,7 @@ CREATE TABLE IF NOT EXISTS downtime_eventos (
   motivo         VARCHAR(150) NOT NULL,
   hora_inicio    TIME NOT NULL,
   hora_fin       TIME NOT NULL,
-  minutos        INTEGER GENERATED ALWAYS AS
-                   (EXTRACT(EPOCH FROM (hora_fin - hora_inicio)) / 60)::INTEGER
-                 STORED,
+  minutos        INTEGER,
   comentarios    TEXT,
   created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
