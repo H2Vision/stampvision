@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import type { AdminUsuarioRow, AdminPrensaSimple } from "@/lib/data/admin";
+import type { AdminUsuarioRow } from "@/lib/data/admin";
 import { UserPlus, Pencil, ToggleLeft, ToggleRight, X, Check } from "lucide-react";
 
 const ROLES = [
@@ -40,35 +40,29 @@ const ROL_STYLES: Record<string, string> = {
   operador:           "bg-gray-100 text-gray-600",
 };
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 interface UsuarioForm {
-  nombre:    string;
-  email:     string;
-  rol:       string;
-  prensa_id: string;
-  activo:    boolean;
+  nombre: string;
+  email:  string;
+  rol:    string;
+  activo: boolean;
 }
 
-const EMPTY_FORM: UsuarioForm = { nombre: "", email: "", rol: "operador", prensa_id: "", activo: true };
+const EMPTY_FORM: UsuarioForm = { nombre: "", email: "", rol: "operador", activo: true };
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
 function UsuarioModal({
   initial,
-  prensas,
   onSave,
   onClose,
 }: {
   initial: UsuarioForm & { id?: string };
-  prensas: AdminPrensaSimple[];
-  onSave: (form: UsuarioForm & { id?: string }) => Promise<void>;
+  onSave:  (form: UsuarioForm & { id?: string }) => Promise<void>;
   onClose: () => void;
 }) {
   const [form, setForm] = useState(initial);
   const [saving, startSaving] = useTransition();
   const [error, setError] = useState("");
-
   const isEdit = !!initial.id;
 
   function set(field: keyof UsuarioForm, value: string | boolean) {
@@ -82,9 +76,7 @@ function UsuarioModal({
       return;
     }
     setError("");
-    startSaving(async () => {
-      await onSave({ ...form, id: initial.id });
-    });
+    startSaving(async () => { await onSave({ ...form, id: initial.id }); });
   }
 
   return (
@@ -96,7 +88,6 @@ function UsuarioModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Nombre */}
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">Nombre completo</label>
             <input
@@ -107,21 +98,19 @@ function UsuarioModal({
             />
           </div>
 
-          {/* Email */}
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
             <input
               type="email"
-              className="w-full border border-surface-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/40"
+              className="w-full border border-surface-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/40 disabled:bg-gray-50 disabled:text-gray-400"
               value={form.email}
               onChange={(e) => set("email", e.target.value)}
               placeholder="usuario@h2stamping.com"
               disabled={isEdit}
             />
-            {isEdit && <p className="text-xs text-gray-400 mt-1">El email no se puede cambiar (es la llave de Supabase Auth).</p>}
+            {isEdit && <p className="text-xs text-gray-400 mt-1">El email no se puede cambiar.</p>}
           </div>
 
-          {/* Rol */}
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">Rol</label>
             <select
@@ -135,22 +124,6 @@ function UsuarioModal({
             </select>
           </div>
 
-          {/* Prensa asignada */}
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Prensa asignada <span className="text-gray-300">(opcional)</span></label>
-            <select
-              className="w-full border border-surface-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/40"
-              value={form.prensa_id}
-              onChange={(e) => set("prensa_id", e.target.value)}
-            >
-              <option value="">— Sin prensa asignada —</option>
-              {prensas.map((p) => (
-                <option key={p.id} value={p.id}>{p.nombre}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Activo */}
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -185,17 +158,11 @@ function UsuarioModal({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function UsuariosList({
-  usuarios: initialUsuarios,
-  prensas,
-}: {
-  usuarios: AdminUsuarioRow[];
-  prensas:  AdminPrensaSimple[];
-}) {
+export function UsuariosList({ usuarios: initialUsuarios }: { usuarios: AdminUsuarioRow[] }) {
   const [usuarios, setUsuarios] = useState(initialUsuarios);
-  const [modal, setModal] = useState<(UsuarioForm & { id?: string }) | null>(null);
-  const [toast, setToast] = useState("");
-  const [, startT] = useTransition();
+  const [modal, setModal]       = useState<(UsuarioForm & { id?: string }) | null>(null);
+  const [toast, setToast]       = useState("");
+  const [, startT]              = useTransition();
 
   function showToast(msg: string) {
     setToast(msg);
@@ -204,35 +171,23 @@ export function UsuariosList({
 
   async function handleSave(form: UsuarioForm & { id?: string }) {
     if (form.id) {
-      // UPDATE
       const res = await fetch(`/api/admin/usuarios/${form.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ nombre: form.nombre, rol: form.rol, activo: form.activo }),
       });
       if (!res.ok) { showToast("Error al guardar."); return; }
-      const updated = await res.json();
-      const prensa = prensas.find((p) => p.id === form.prensa_id);
-      setUsuarios((prev) => prev.map((u) =>
-        u.id === form.id
-          ? { ...u, ...updated, prensa_nombre: prensa?.nombre ?? null }
-          : u
-      ));
+      setUsuarios((prev) => prev.map((u) => u.id === form.id ? { ...u, ...form } : u));
       showToast("Usuario actualizado.");
     } else {
-      // CREATE
       const res = await fetch("/api/admin/usuarios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ nombre: form.nombre, email: form.email, rol: form.rol, activo: form.activo }),
       });
       if (!res.ok) { showToast("Error al crear usuario."); return; }
       const created = await res.json();
-      const prensa = prensas.find((p) => p.id === form.prensa_id);
-      setUsuarios((prev) => [
-        { ...created, prensa_nombre: prensa?.nombre ?? null },
-        ...prev,
-      ]);
+      setUsuarios((prev) => [created, ...prev]);
       showToast("Usuario creado.");
     }
     setModal(null);
@@ -243,7 +198,7 @@ export function UsuariosList({
       const res = await fetch(`/api/admin/usuarios/${u.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre: u.nombre, rol: u.rol, prensa_id: u.prensa_id, activo: !u.activo }),
+        body: JSON.stringify({ nombre: u.nombre, rol: u.rol, activo: !u.activo }),
       });
       if (!res.ok) { showToast("Error al cambiar estado."); return; }
       setUsuarios((prev) => prev.map((x) => x.id === u.id ? { ...x, activo: !x.activo } : x));
@@ -251,44 +206,21 @@ export function UsuariosList({
     });
   }
 
-  function openCreate() {
-    setModal({ ...EMPTY_FORM });
-  }
-
-  function openEdit(u: AdminUsuarioRow) {
-    setModal({
-      id:        u.id,
-      nombre:    u.nombre,
-      email:     u.email,
-      rol:       u.rol,
-      prensa_id: u.prensa_id ?? "",
-      activo:    u.activo,
-    });
-  }
-
   return (
     <div className="space-y-4">
-      {/* Toast */}
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 bg-gray-900 text-white text-sm px-4 py-2 rounded-lg shadow-lg">
           {toast}
         </div>
       )}
 
-      {/* Modal */}
       {modal && (
-        <UsuarioModal
-          initial={modal}
-          prensas={prensas}
-          onSave={handleSave}
-          onClose={() => setModal(null)}
-        />
+        <UsuarioModal initial={modal} onSave={handleSave} onClose={() => setModal(null)} />
       )}
 
-      {/* Toolbar */}
       <div className="flex justify-end">
         <button
-          onClick={openCreate}
+          onClick={() => setModal({ ...EMPTY_FORM })}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors"
         >
           <UserPlus className="w-4 h-4" />
@@ -296,7 +228,6 @@ export function UsuariosList({
         </button>
       </div>
 
-      {/* Table */}
       {usuarios.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <p className="text-gray-400 text-sm">Sin usuarios registrados aún.</p>
@@ -306,7 +237,7 @@ export function UsuariosList({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b-2 border-surface-border">
-                {["Nombre", "Email", "Rol", "Prensa asignada", "Estado", "Registrado", ""].map((h) => (
+                {["Nombre", "Email", "Rol", "Estado", "Registrado", ""].map((h) => (
                   <th key={h} className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                     {h}
                   </th>
@@ -323,28 +254,21 @@ export function UsuariosList({
                       {ROL_LABELS[u.rol] ?? u.rol}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-gray-600">
-                    {u.prensa_nombre ?? <span className="text-gray-300">—</span>}
-                  </td>
                   <td className="py-3 px-4">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${u.activo ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"}`}>
                       {u.activo ? "Activo" : "Inactivo"}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-gray-400 text-xs">
-                    {u.created_at.split("T")[0]}
-                  </td>
+                  <td className="py-3 px-4 text-gray-400 text-xs">{u.created_at.split("T")[0]}</td>
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2">
-                      {/* Editar */}
                       <button
-                        onClick={() => openEdit(u)}
+                        onClick={() => setModal({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, activo: u.activo })}
                         title="Editar"
                         className="text-gray-400 hover:text-brand-dark transition-colors"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
-                      {/* Toggle activo */}
                       <button
                         onClick={() => handleToggleActivo(u)}
                         title={u.activo ? "Desactivar" : "Activar"}

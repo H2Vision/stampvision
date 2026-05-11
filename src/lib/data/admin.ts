@@ -20,14 +20,12 @@ export interface Umbrales {
 }
 
 export interface AdminUsuarioRow {
-  id:               string;
-  nombre:           string;
-  email:            string;
-  rol:              string;
-  activo:           boolean;
-  prensa_id:        string | null;
-  prensa_nombre:    string | null;
-  created_at:       string;
+  id:         string;
+  nombre:     string;
+  email:      string;
+  rol:        string;
+  activo:     boolean;
+  created_at: string;
 }
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -124,18 +122,16 @@ export async function getAdminUsuarios(): Promise<AdminUsuarioRow[]> {
   const sb = createServiceClient();
   const { data, error } = await sb
     .from("usuarios")
-    .select("id, nombre, email, rol, activo, prensa_id, created_at, prensas(nombre)")
+    .select("id, nombre, email, rol, activo, created_at")
     .order("created_at", { ascending: false });
-  if (error) return []; // table may be empty
+  if (error) return [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data ?? []).map((u: any) => ({
-    id:            u.id,
-    nombre:        u.nombre,
-    email:         u.email,
-    rol:           u.rol,
-    activo:        u.activo,
-    prensa_id:     u.prensa_id ?? null,
-    prensa_nombre: u.prensas?.nombre ?? null,
-    created_at:    u.created_at,
+    id:         u.id,
+    nombre:     u.nombre,
+    email:      u.email,
+    rol:        u.rol,
+    activo:     u.activo,
+    created_at: u.created_at,
   }));
 }

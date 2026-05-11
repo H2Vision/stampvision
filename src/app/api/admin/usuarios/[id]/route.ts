@@ -4,11 +4,11 @@ import { NextRequest, NextResponse } from "next/server";
 // PUT /api/admin/usuarios/[id]  — update nombre, rol, prensa_id, activo
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   const body = await req.json();
-  const { nombre, rol, prensa_id, activo } = body;
+  const { nombre, rol, activo } = body;
   const sb = createServiceClient();
   const { data, error } = await sb
     .from("usuarios")
-    .update({ nombre, rol, prensa_id: prensa_id || null, activo })
+    .update({ nombre, rol, activo })
     .eq("id", params.id)
     .select()
     .single();
