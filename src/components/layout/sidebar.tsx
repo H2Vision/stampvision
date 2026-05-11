@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "./sidebar-context";
@@ -20,12 +21,13 @@ import { useSidebar } from "./sidebar-context";
 // ─── Nav definition ───────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { href: "/dashboard",  label: "Dashboard",   icon: LayoutDashboard },
-  { href: "/upload",     label: "Subir Datos",  icon: Upload          },
-  { href: "/prensas",    label: "Prensas",      icon: Gauge           },
-  { href: "/chat",       label: "Chat IA",      icon: Bot             },
-  { href: "/alertas",    label: "Alertas",      icon: BellDot         },
-  { href: "/reportes",   label: "Reportes",     icon: BarChart3       },
+  { href: "/dashboard",  label: "Dashboard",        icon: LayoutDashboard },
+  { href: "/registro",   label: "Registro de Turno", icon: ClipboardList   },
+  { href: "/upload",     label: "Subir Datos",       icon: Upload          },
+  { href: "/prensas",    label: "Prensas",            icon: Gauge           },
+  { href: "/chat",       label: "Chat IA",            icon: Bot             },
+  { href: "/alertas",    label: "Alertas",            icon: BellDot         },
+  { href: "/reportes",   label: "Reportes",           icon: BarChart3       },
 ] as const;
 
 const ADMIN_ITEMS = [
