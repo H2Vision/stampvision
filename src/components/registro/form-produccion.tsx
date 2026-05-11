@@ -70,7 +70,7 @@ interface Form {
   cantidad_material: string;
   piezas_ok:         string;
   piezas_nok:        string;
-  tipo_defecto:      string;
+  tipos_defecto:     string[];
   po:                string;
   kilos_scrap:       string;
   comentarios:       string;
@@ -80,7 +80,7 @@ const EMPTY: Form = {
   operador: "", fecha: hoyMexico(), turno: "", prensa_id: "",
   numero_parte: "", velocidad_real: "", comentarios_gpm: "",
   tipo_material: "", cantidad_material: "",
-  piezas_ok: "", piezas_nok: "", tipo_defecto: "",
+  piezas_ok: "", piezas_nok: "", tipos_defecto: [],
   po: "", kilos_scrap: "", comentarios: "",
 };
 
@@ -92,6 +92,16 @@ export function FormProduccion({ prensas, operadores, numerosParte }: Props) {
 
   function set(field: keyof Form, value: string) {
     setForm((f) => ({ ...f, [field]: value }));
+    if (status !== "idle") setStatus("idle");
+  }
+
+  function toggleDefecto(defecto: string) {
+    setForm((f) => ({
+      ...f,
+      tipos_defecto: f.tipos_defecto.includes(defecto)
+        ? f.tipos_defecto.filter((d) => d !== defecto)
+        : [...f.tipos_defecto, defecto],
+    }));
     if (status !== "idle") setStatus("idle");
   }
 
@@ -119,14 +129,14 @@ export function FormProduccion({ prensas, operadores, numerosParte }: Props) {
           cantidad_material: form.cantidad_material   ? Number(form.cantidad_material) : null,
           piezas_ok:         form.piezas_ok           ? Number(form.piezas_ok)          : null,
           piezas_nok:        form.piezas_nok          ? Number(form.piezas_nok)         : null,
-          comentarios:       [form.tipo_defecto, form.comentarios].filter(Boolean).join(" | ") || null,
+          comentarios:       [...form.tipos_defecto, form.comentarios].filter(Boolean).join(" | ") || null,
           po:                form.po                   || null,
           kilos_scrap:       form.kilos_scrap          ? Number(form.kilos_scrap)        : null,
         }),
       });
       if (res.ok) {
         setStatus("ok");
-        setForm({ ...EMPTY, operador: form.operador, turno: form.turno, fecha: form.fecha });
+        setForm({ ...EMPTY, operador: form.operador, turno: form.turno, fecha: form.fecha, tipos_defecto: [] });
       } else {
         const j = await res.json();
         setErrMsg(j.error ?? "Error al guardar.");
@@ -209,7 +219,7 @@ export function FormProduccion({ prensas, operadores, numerosParte }: Props) {
           </select>
         </Field>
 
-        <Field label={`Cantidad de ${form.tipo_material || "Material"}`}>
+        <Field label="Cantidad de Rollo / Bobina / Caja / Contenedor">
           <input
             type="number" min="0" className={INPUT}
             placeholder="Ej. 3"
@@ -232,7 +242,7 @@ export function FormProduccion({ prensas, operadores, numerosParte }: Props) {
           />
         </Field>
 
-        <Field label="Número de Piezas NOK (Scrap)" required>
+        <Field label="Número de Piezas NOK" required>
           <input
             type="number" min="0" className={INPUT}
             placeholder="Ej. 23"
@@ -241,15 +251,32 @@ export function FormProduccion({ prensas, operadores, numerosParte }: Props) {
           />
         </Field>
 
-        {/* Tipo de defecto — solo aparece si hay NOK */}
+        {/* Categorías de NOK — aparece solo si hay piezas NOK */}
         {Number(form.piezas_nok) > 0 && (
           <div className="sm:col-span-2">
-            <Field label="Tipo de Defecto en Piezas NOK" required>
-              <select className={SELECT} value={form.tipo_defecto} onChange={(e) => set("tipo_defecto", e.target.value)}>
-                <option value="">— Selecciona el defecto —</option>
-                {TIPOS_DEFECTO.map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
-            </Field>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Categoría de Piezas NOK <span className="text-red-500">*</span>
+              <span className="text-gray-400 font-normal ml-2">(puedes elegir más de una)</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {TIPOS_DEFECTO.map((d) => (
+                <label
+                  key={d}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition-all
+                    ${form.tipos_defecto.includes(d)
+                      ? "border-brand bg-brand/10 text-brand-dark font-semibold"
+                      : "border-surface-border bg-white text-gray-700 hover:border-gray-300"}`}
+                >
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 accent-brand shrink-0"
+                    checked={form.tipos_defecto.includes(d)}
+                    onChange={() => toggleDefecto(d)}
+                  />
+                  <span className="text-sm leading-snug">{d}</span>
+                </label>
+              ))}
+            </div>
           </div>
         )}
 
